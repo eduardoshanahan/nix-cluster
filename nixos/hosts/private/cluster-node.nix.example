@@ -1,0 +1,26 @@
+{ ... }:
+{
+  homelab.adminAuthorizedKeys = [
+    "ssh-ed25519 AAAA... replace-me"
+  ];
+
+  # The public key above is embedded into the SD-card image so first boot can
+  # use SSH key authentication directly without passwords.
+
+  homelab.domain = "hhlab.home.arpa";
+  homelab.cluster.apiServerEndpoint = "https://cluster-api.hhlab.home.arpa:6443";
+  homelab.cluster.clusterToken = "replace-with-a-private-bootstrap-token";
+
+  # Use either DHCP reservations or static addressing.
+  # Uncomment the block below only if you want fully static addressing in NixOS.
+  #
+  # networking.useDHCP = false;
+  # networking.interfaces.eth0.ipv4.addresses = [
+  #   {
+  #     address = "192.168.1.201";
+  #     prefixLength = 24;
+  #   }
+  # ];
+  # networking.defaultGateway = "192.168.1.1";
+  # networking.nameservers = [ "192.168.1.1" ];
+}
