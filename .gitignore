@@ -1,0 +1,5 @@
+/result
+/result-*
+/tmp
+/nixos/hosts/private/*.nix
+/secrets/
