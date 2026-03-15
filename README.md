@@ -1,39 +1,44 @@
 # nix-cluster
 
-Declarative NixOS-based Kubernetes cluster for the homelab Raspberry Pi fleet.
+Declarative NixOS-based Kubernetes cluster work for the homelab Raspberry Pi
+fleet.
 
-## Goal
+## Current Status
 
-This repository is for building a new Kubernetes cluster on five Raspberry Pi 4
-nodes with 8 GB RAM each.
+We are intentionally restarting the implementation workflow after learning that
+the first per-node SD-card approach was too brittle.
 
-The immediate goal is to get the cluster working correctly on NixOS before
-migrating any existing workloads.
+The cluster shape is still the same:
 
-## First-phase Principles
-
+- five Raspberry Pi 4 nodes with 8 GB RAM each
 - NixOS on every node
-- As much declarative configuration as practical
-- Lightweight Kubernetes distribution suitable for ARM64 homelab hardware
-- Reuse existing homelab services where that is the better operational fit
-- Keep migrations out of scope until the platform is stable
+- `k3s`
+- 3 control-plane nodes and 2 workers
+- no workload migration yet
 
-## Starting Architecture
+What changes now is the provisioning workflow.
 
-The initial scaffold assumes:
+## New Direction
 
-- `k3s` as the Kubernetes distribution
-- 3 control-plane nodes
-- 2 worker nodes
-- external integrations with existing homelab services where relevant
-- incremental adoption of ingress, certificates, storage, and monitoring
+The cluster should be built around:
 
-More detail lives in:
+- one known-good Raspberry Pi 4 base image
+- small role-specific overlays for control-plane and worker behavior
+- minimal per-node differences
+- clear separation between Pi host provisioning and services running on the
+  cluster
+- validation of generated `k3s` units before flashing
+- post-boot deploys for most changes instead of repeated reflashing
+
+The goal is to make the cluster easier to understand, safer to iterate on, and
+more aligned with good NixOS and homelab practices.
+
+## Start Here
 
 - `HOMELAB_AND_CLUSTER_CONTEXT.md`
-- `docs/ARCHITECTURE.md`
-- `docs/IMPLEMENTATION_ROADMAP.md`
-- `docs/SD_CARD_AND_BOOTSTRAP_RUNBOOK.md`
+- `docs/RESTART_PLAN.md`
+- `docs/LESSONS_LEARNED.md`
+- `docs/NODE_INVENTORY_TEMPLATE.md`
 
 ## Repository Layout
 
@@ -42,14 +47,9 @@ More detail lives in:
 - `nixos/profiles/`: reusable profiles
 - `nixos/hosts/`: public node definitions
 - `nixos/hosts/private/`: gitignored environment-specific overrides
-- `docs/`: architecture and operator documentation
-
-## Build Targets
-
-Planned outputs:
-
-- one generic Raspberry Pi 4 SD image profile for Kubernetes nodes
-- five host-specific NixOS configurations for the cluster nodes
+- `kubernetes/`: future in-cluster service definitions, kept separate from host
+  provisioning
+- `docs/`: operator documentation and planning
 
 ## Working Rule
 
