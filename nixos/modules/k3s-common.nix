@@ -1,34 +1,32 @@
 { config, lib, ... }:
 let
   isServer = config.homelab.cluster.nodeRole == "server";
-  isBootstrapServer = config.networking.hostName == "cluster-pi-01";
+  apiServerHostMatch = builtins.match "https://([^:/]+)(:[0-9]+)?(/.*)?" config.homelab.cluster.apiServerEndpoint;
+  apiServerHost = if apiServerHostMatch == null then null else builtins.elemAt apiServerHostMatch 0;
+  commonFlags = [
+    "--cluster-cidr=${config.homelab.cluster.clusterCidr}"
+    "--service-cidr=${config.homelab.cluster.serviceCidr}"
+    "--disable=servicelb"
+    "--disable=traefik"
+  ];
+
+  serverTlsSans = lib.unique (
+    [ config.networking.hostName ]
+    ++ lib.optionals (apiServerHost != null) [ apiServerHost ]
+    ++ config.homelab.cluster.tlsSan
+  );
+
+  serverOnlyFlags =
+    [ "--write-kubeconfig-mode=0644" ]
+    ++ map (san: "--tls-san=${san}") serverTlsSans;
 in
 lib.mkMerge [
   {
-    assertions = [
-      {
-        assertion = config.homelab.adminAuthorizedKeys != [ ];
-        message = "Set homelab.adminAuthorizedKeys in private overrides before building node images.";
-      }
-      {
-        assertion = config.homelab.cluster.clusterToken != null;
-        message = "Set homelab.cluster.clusterToken in private overrides before deploying the cluster.";
-      }
-    ];
-
     services.k3s = {
       enable = true;
       role = config.homelab.cluster.nodeRole;
       token = config.homelab.cluster.clusterToken;
-      extraFlags = [
-        "--write-kubeconfig-mode=0644"
-        "--cluster-cidr=${config.homelab.cluster.clusterCidr}"
-        "--service-cidr=${config.homelab.cluster.serviceCidr}"
-        "--disable=servicelb"
-        "--disable=traefik"
-      ] ++ lib.optionals isServer (
-        map (san: "--tls-san=${san}") config.homelab.cluster.tlsSan
-      );
+      extraFlags = commonFlags ++ lib.optionals isServer serverOnlyFlags;
     };
 
     networking.firewall = {
@@ -53,11 +51,11 @@ lib.mkMerge [
     };
   }
 
-  (lib.mkIf isBootstrapServer {
+  (lib.mkIf config.homelab.cluster.bootstrapServer {
     services.k3s.clusterInit = true;
   })
 
-  (lib.mkIf (!isBootstrapServer) {
+  (lib.mkIf (!config.homelab.cluster.bootstrapServer) {
     services.k3s.serverAddr = config.homelab.cluster.apiServerEndpoint;
   })
 ]

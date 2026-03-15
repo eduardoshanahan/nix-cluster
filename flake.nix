@@ -31,10 +31,11 @@
               ./nixos/modules/base.nix
               ./nixos/modules/ssh.nix
               ./nixos/modules/k3s-common.nix
-              ./nixos/profiles/rpi4-k3s.nix
+              ./nixos/modules/validation.nix
+              ./nixos/profiles/rpi4-base.nix
+              (if role == "server" then ./nixos/profiles/k3s-server.nix else ./nixos/profiles/k3s-agent.nix)
               {
                 networking.hostName = hostName;
-                homelab.cluster.nodeRole = role;
               }
             ]
             ++ extraModules
@@ -108,8 +109,81 @@
       system:
       let
         pkgs = import nixpkgs { inherit system; };
+        validateCluster = pkgs.writeShellApplication {
+          name = "validate-cluster-node";
+          text = ''
+            set -euo pipefail
+
+            if [ "$#" -ne 1 ]; then
+              echo "usage: validate-cluster-node <nixosConfiguration>" >&2
+              exit 1
+            fi
+
+            node="$1"
+            flake_ref="path:$PWD#nixosConfigurations.$node"
+            flags_json="$(nix eval "$flake_ref.config.services.k3s.extraFlags" --json)"
+            exec_start="$(nix eval "$flake_ref.config.systemd.services.k3s.serviceConfig.ExecStart" --raw)"
+            role="$(nix eval "$flake_ref.config.homelab.cluster.nodeRole" --raw)"
+
+            echo "role=$role"
+            echo "flags=$flags_json"
+            echo "exec_start=$exec_start"
+
+            if [ "$role" = "server" ]; then
+              if ! printf '%s\n' "$flags_json" | grep -q 'write-kubeconfig-mode'; then
+                echo "validation failed: server node is missing --write-kubeconfig-mode" >&2
+                exit 1
+              fi
+              if ! printf '%s\n' "$exec_start" | grep -q '/bin/k3s server'; then
+                echo "validation failed: server node does not generate k3s server ExecStart" >&2
+                exit 1
+              fi
+            else
+              if printf '%s\n' "$flags_json" | grep -q 'write-kubeconfig-mode'; then
+                echo "validation failed: worker node contains --write-kubeconfig-mode" >&2
+                exit 1
+              fi
+              if ! printf '%s\n' "$exec_start" | grep -q '/bin/k3s agent'; then
+                echo "validation failed: worker node does not generate k3s agent ExecStart" >&2
+                exit 1
+              fi
+            fi
+          '';
+        };
+        deployNode = pkgs.writeShellApplication {
+          name = "deploy-cluster-node";
+          runtimeInputs = [ pkgs.nixos-rebuild ];
+          text = ''
+            set -euo pipefail
+
+            if [ "$#" -lt 2 ]; then
+              echo "usage: deploy-cluster-node <nixosConfiguration> <target-host>" >&2
+              exit 1
+            fi
+
+            node="$1"
+            target="$2"
+
+            nixos-rebuild switch \
+              --flake "path:$PWD#$node" \
+              --target-host "$target"
+          '';
+        };
       in
       {
+        packages.validate-cluster-node = validateCluster;
+        packages.deploy-cluster-node = deployNode;
+
+        apps.validate-cluster-node = {
+          type = "app";
+          program = "${validateCluster}/bin/validate-cluster-node";
+        };
+
+        apps.deploy-cluster-node = {
+          type = "app";
+          program = "${deployNode}/bin/deploy-cluster-node";
+        };
+
         devShells.default = pkgs.mkShell {
           packages = [
             pkgs.git

@@ -57,23 +57,26 @@ This means the work in `nix-cluster` should favor:
 - compatibility with existing homelab networking, storage, DNS, ingress,
   logging, monitoring, identity, and backup patterns where appropriate
 
-## Initial Direction
+## Current Restart Direction
 
-At this stage, `nix-cluster` should answer questions such as:
+We are intentionally restarting the implementation workflow after learning from
+the first bootstrap attempt.
 
-- How the Kubernetes cluster is provisioned and managed
-- Which workloads should move into Kubernetes and which should remain outside it
-- How the cluster integrates with the existing Raspberry Pi and Synology
-  services
-- How ingress, certificates, secrets, storage, observability, and backups
-  should work in the new model
-- How to keep the platform maintainable for a small homelab team with limited
-  Kubernetes experience
+The cluster goal has not changed. We still want a healthy, well-understood
+Kubernetes platform on NixOS before migrating any existing services.
 
-The immediate intent is not to migrate existing services yet. The first phase
-is to establish a healthy, well-understood Kubernetes platform on NixOS.
+What is changing is the provisioning model.
 
-That platform should, where appropriate:
+The new direction is to favor:
+
+- one known-good Raspberry Pi 4 base image
+- role-specific overlays for control-plane and worker behavior
+- minimal per-node identity data
+- explicit separation between host provisioning and service definitions
+- validation of generated systemd units before flashing
+- post-boot deploys for most follow-up changes
+
+That platform should still, where appropriate:
 
 - reuse homelab services that already exist outside the cluster
 - integrate with existing operational tooling such as Uptime Kuma
@@ -81,9 +84,14 @@ That platform should, where appropriate:
   better fit
 - align with the same certificate and TLS approach already used in the homelab
 
-A best-practice homelab cluster should start small, keep stateful and
-storage-heavy services under extra scrutiny, and prefer reversible steps over a
-big-bang migration.
+This remains a best-practice-oriented homelab cluster effort, which means
+reversible steps, explicit validation, and keeping the operational model
+understandable for someone who is still learning Kubernetes.
+
+That includes keeping a clean boundary between:
+
+- the Raspberry Pi hosts and their operating-system configuration
+- the cluster services and workloads that will eventually run on top of them
 
 ## Repository Working Rule
 

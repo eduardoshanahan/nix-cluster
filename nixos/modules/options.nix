@@ -38,6 +38,12 @@
           description = "Whether this node acts as a k3s server or agent.";
         };
 
+        bootstrapServer = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Whether this server should run the initial cluster bootstrap.";
+        };
+
         apiServerEndpoint = lib.mkOption {
           type = lib.types.str;
           default = "https://cluster-api.internal.example:6443";
