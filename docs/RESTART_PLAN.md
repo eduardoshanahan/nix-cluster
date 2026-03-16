@@ -27,11 +27,9 @@ the normal way of making progress.
 The new workflow should prefer:
 
 1. one known-good Raspberry Pi 4 base image
-2. one control-plane role layer
-3. one worker role layer
-4. minimal per-node identity data
-5. validation before flashing
-6. post-boot deploys for most follow-up changes
+2. validation before flashing
+3. post-boot deploys for most follow-up changes
+4. node-specific configuration after first boot
 
 It should also preserve a clean separation between:
 
@@ -54,21 +52,6 @@ concerns:
 The base image should not bake in fragile role-specific behavior unless it is
 clearly validated.
 
-### Role overlays
-
-There should be two role-specific layers:
-
-- control plane
-- worker
-
-Role modules must make server-only and agent-only `k3s` behavior explicit.
-
-Examples:
-
-- control plane may set `clusterInit`, API TLS SANs, and server-only flags
-- workers must never receive server-only flags such as
-  `--write-kubeconfig-mode`
-
 ### Per-node identity
 
 Per-node configuration should be as small as possible:
@@ -79,6 +62,9 @@ Per-node configuration should be as small as possible:
 - future labels or taints if needed
 
 Per-node files should not become the main place where cluster behavior lives.
+
+That identity should be applied after first boot instead of requiring a
+different SD-card image for every node.
 
 ## Host And Service Separation
 
@@ -138,23 +124,20 @@ That means the cluster should move toward a post-boot workflow such as:
 
 ## Immediate Next Implementation Steps
 
-1. Refactor profiles into:
-   - Raspberry Pi base
-   - control-plane role
-   - worker role
+1. Define and build a single Raspberry Pi bootstrap image
 2. Add validation checks for generated `k3s` units
-3. Build fresh role-correct worker images
-4. Recover `cluster-pi-04` and `cluster-pi-05`
-5. Add a documented post-boot deploy flow
+3. Define the post-boot node-configuration workflow
+4. Boot and configure `cluster-pi-01`
+5. Repeat for the other four nodes
 6. Only then continue with ingress, certificates, and workload planning
 
 ## Success Criteria For The Restart
 
 The restart is successful when:
 
-- a single base approach boots reliably on the Pis
-- role-specific `k3s` behavior is correct by construction
-- worker mistakes are caught before flashing
+- a single shared image boots reliably on the Pis
+- node role and identity are applied after boot
+- `k3s` behavior is validated before rollout
 - node recovery does not require guesswork
 - most iterative changes happen through deploys rather than repeated SD-card
   image churn
