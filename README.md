@@ -23,7 +23,7 @@ What changes now is the provisioning workflow.
 The cluster should be built around:
 
 - one known-good Raspberry Pi 4 base image
-- small role-specific overlays for control-plane and worker behavior
+- node-specific configuration applied after first boot
 - minimal per-node differences
 - clear separation between Pi host provisioning and services running on the
   cluster
