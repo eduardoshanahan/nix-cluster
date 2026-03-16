@@ -5,7 +5,8 @@
 This document is the handoff point for the next clean implementation session.
 
 The goal of the next session is to restart the cluster bootstrap from
-`cluster-pi-01` using the refactored repository layout and a cleaner workflow.
+`cluster-pi-01` using the refactored repository layout and a stricter
+single-image workflow.
 
 ## Decision
 
@@ -13,9 +14,10 @@ We are restarting the cluster bootstrap from scratch.
 
 That means:
 
-- reflash all five SD cards
+- use one shared bootstrap image for all five SD cards
+- configure each node after first boot
 - rebuild trust from `cluster-pi-01`
-- do not continue mixing old and new bootstrap artifacts
+- do not continue mixing old and new node-specific bootstrap artifacts
 - treat the current cluster state as disposable learning state
 
 ## Why We Are Restarting
@@ -37,10 +39,6 @@ The repository has already been moved toward the new structure:
 
 - Raspberry Pi base profile:
   `nixos/profiles/rpi4-base.nix`
-- control-plane role profile:
-  `nixos/profiles/k3s-server.nix`
-- worker role profile:
-  `nixos/profiles/k3s-agent.nix`
 - shared `k3s` behavior:
   `nixos/modules/k3s-common.nix`
 - validation assertions:
@@ -51,22 +49,18 @@ The repository has already been moved toward the new structure:
 - workload boundary placeholder:
   `kubernetes/README.md`
 
-## Important Verified State
+## Important Constraint For The Restart
 
-The refactored configuration now generates the correct role-specific `k3s`
-commands.
+We are being strict:
 
-Verified:
+- we do not want five different bootstrap images
+- we want one shared image
+- each node should be configured after first boot
 
-- `cluster-pi-01` generates `k3s server`
-- `cluster-pi-01` includes `--write-kubeconfig-mode=0644`
-- `cluster-pi-04` generates `k3s agent`
-- `cluster-pi-04` does not include `--write-kubeconfig-mode=0644`
+The repository refactor improved validation and separation of concerns, but it
+has not yet completed that final single-image provisioning model.
 
-The new validation helper was also run successfully for:
-
-- `cluster-pi-01`
-- `cluster-pi-04`
+That should be the first implementation goal of the next session.
 
 ## Cluster Identity And Inventory
 
@@ -87,28 +81,27 @@ The new validation helper was also run successfully for:
 ## Recommended Next Session Sequence
 
 1. Confirm the refactored repo is the intended new baseline.
-2. Build a fresh `cluster-pi-01` SD image from the refactored layout.
-3. Inspect the generated image contents before flashing.
-4. Flash `cluster-pi-01`.
-5. Boot only `cluster-pi-01` and verify:
+2. Implement the single shared bootstrap image workflow.
+3. Document how node identity and role are applied after first boot.
+4. Build the shared bootstrap image.
+5. Inspect the generated image contents before flashing.
+6. Flash `cluster-pi-01`.
+7. Boot only `cluster-pi-01` and verify:
    - SSH access
    - hostname
+   - post-boot node configuration flow
    - `k3s server`
    - API endpoint behavior
-6. Build and flash `cluster-pi-02`.
-7. Build and flash `cluster-pi-03`.
-8. Verify healthy three-node control-plane quorum.
-9. Build and flash `cluster-pi-04`.
-10. Build and flash `cluster-pi-05`.
-11. Only after the cluster is healthy again, move to post-boot deploy workflow
-    improvements and future service onboarding.
+8. Repeat the same shared-image bootstrap for `cluster-pi-02` through
+   `cluster-pi-05`, configuring each node after boot.
+9. Only after the cluster is healthy again, move to future service onboarding.
 
 ## Rules For The Restart
 
 - keep host provisioning under `nixos/`
 - keep future cluster workloads under `kubernetes/`
 - validate generated `k3s` units before flashing
-- prefer fresh output names when debugging artifacts
+- do not return to per-node bootstrap images
 - prefer deploys over reflashing once a node has booted successfully
 
 ## Related Documents

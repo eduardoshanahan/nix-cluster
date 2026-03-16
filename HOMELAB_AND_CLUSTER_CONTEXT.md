@@ -70,7 +70,7 @@ What is changing is the provisioning model.
 The new direction is to favor:
 
 - one known-good Raspberry Pi 4 base image
-- role-specific overlays for control-plane and worker behavior
+- node-specific configuration applied after first boot
 - minimal per-node identity data
 - explicit separation between host provisioning and service definitions
 - validation of generated systemd units before flashing

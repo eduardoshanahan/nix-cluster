@@ -41,10 +41,15 @@ stronger validation and cleaner artifact handling.
 
 ## Operational Lessons
 
-### Keep image roles simple
+### Keep the bootstrap image generic
 
-Base hardware bootstrap, cluster role, and node identity should be treated as
+Base hardware bootstrap, node role, and node identity should be treated as
 separate layers.
+
+For the restart, we are choosing the strictest version of that rule:
+
+- one shared bootstrap image
+- configuration after first boot
 
 ### Validate generated output
 
