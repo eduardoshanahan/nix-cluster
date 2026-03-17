@@ -20,42 +20,44 @@ let
     [ "--write-kubeconfig-mode=0644" ]
     ++ map (san: "--tls-san=${san}") serverTlsSans;
 in
-lib.mkMerge [
-  {
-    services.k3s = {
-      enable = true;
-      role = config.homelab.cluster.nodeRole;
-      token = config.homelab.cluster.clusterToken;
-      extraFlags = commonFlags ++ lib.optionals isServer serverOnlyFlags;
-    };
+lib.mkIf config.homelab.cluster.enable (
+  lib.mkMerge [
+    {
+      services.k3s = {
+        enable = true;
+        role = config.homelab.cluster.nodeRole;
+        token = config.homelab.cluster.clusterToken;
+        extraFlags = commonFlags ++ lib.optionals isServer serverOnlyFlags;
+      };
 
-    networking.firewall = {
-      enable = true;
-      allowedTCPPorts =
-        [
-          22
-          10250
-        ]
-        ++ lib.optionals isServer [
-          6443
-          9345
-          2379
-          2380
-        ];
-      allowedUDPPorts = [ 8472 ];
-    };
+      networking.firewall = {
+        enable = true;
+        allowedTCPPorts =
+          [
+            22
+            10250
+          ]
+          ++ lib.optionals isServer [
+            6443
+            9345
+            2379
+            2380
+          ];
+        allowedUDPPorts = [ 8472 ];
+      };
 
-    boot.kernel.sysctl = {
-      "net.ipv4.ip_forward" = 1;
-      "net.ipv6.conf.all.forwarding" = 1;
-    };
-  }
+      boot.kernel.sysctl = {
+        "net.ipv4.ip_forward" = 1;
+        "net.ipv6.conf.all.forwarding" = 1;
+      };
+    }
 
-  (lib.mkIf config.homelab.cluster.bootstrapServer {
-    services.k3s.clusterInit = true;
-  })
+    (lib.mkIf config.homelab.cluster.bootstrapServer {
+      services.k3s.clusterInit = true;
+    })
 
-  (lib.mkIf (!config.homelab.cluster.bootstrapServer) {
-    services.k3s.serverAddr = config.homelab.cluster.apiServerEndpoint;
-  })
-]
+    (lib.mkIf (!config.homelab.cluster.bootstrapServer) {
+      services.k3s.serverAddr = config.homelab.cluster.apiServerEndpoint;
+    })
+  ]
+)
