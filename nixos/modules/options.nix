@@ -27,6 +27,12 @@
       };
 
       cluster = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether this node should run k3s.";
+        };
+
         name = lib.mkOption {
           type = lib.types.str;
           default = "homelab-k3s";
@@ -34,7 +40,8 @@
         };
 
         nodeRole = lib.mkOption {
-          type = lib.types.enum [ "server" "agent" ];
+          type = lib.types.nullOr (lib.types.enum [ "server" "agent" ]);
+          default = null;
           description = "Whether this node acts as a k3s server or agent.";
         };
 

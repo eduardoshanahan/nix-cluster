@@ -11,7 +11,7 @@
     let
       lib = nixpkgs.lib;
 
-      mkClusterSystem =
+      mkClusterModules =
         {
           hostName,
           role,
@@ -19,29 +19,35 @@
           privateSharedModule ? null,
           privateHostModule ? null,
         }:
+        [
+          nixos-hardware.nixosModules.raspberry-pi-4
+          ./nixos/modules/options.nix
+          ./nixos/modules/base.nix
+          ./nixos/modules/ssh.nix
+          ./nixos/modules/k3s-common.nix
+          ./nixos/modules/validation.nix
+          ./nixos/profiles/rpi4-base.nix
+          (if role == "server" then ./nixos/profiles/k3s-server.nix else ./nixos/profiles/k3s-agent.nix)
+          {
+            networking.hostName = hostName;
+          }
+        ]
+        ++ extraModules
+        ++ lib.optionals (privateSharedModule != null) [ privateSharedModule ]
+        ++ lib.optionals (privateHostModule != null) [ privateHostModule ];
+
+      mkClusterSystemFor =
+        system:
+        args:
         lib.nixosSystem {
-          system = "aarch64-linux";
+          inherit system;
           specialArgs = {
             inherit inputs self;
           };
-          modules =
-            [
-              nixos-hardware.nixosModules.raspberry-pi-4
-              ./nixos/modules/options.nix
-              ./nixos/modules/base.nix
-              ./nixos/modules/ssh.nix
-              ./nixos/modules/k3s-common.nix
-              ./nixos/modules/validation.nix
-              ./nixos/profiles/rpi4-base.nix
-              (if role == "server" then ./nixos/profiles/k3s-server.nix else ./nixos/profiles/k3s-agent.nix)
-              {
-                networking.hostName = hostName;
-              }
-            ]
-            ++ extraModules
-            ++ lib.optionals (privateSharedModule != null) [ privateSharedModule ]
-            ++ lib.optionals (privateHostModule != null) [ privateHostModule ];
+          modules = mkClusterModules args;
         };
+
+      mkClusterSystem = mkClusterSystemFor "aarch64-linux";
 
       maybePrivateHost =
         name:
@@ -59,9 +65,14 @@
     {
       nixosConfigurations = {
         rpi4-k3s-generic = mkClusterSystem {
-          hostName = "k3s-generic";
+          hostName = "cluster-bootstrap";
           role = "agent";
           privateSharedModule = privateSharedOverrides;
+          extraModules = [
+            {
+              homelab.cluster.enable = false;
+            }
+          ];
         };
 
         cluster-pi-01 = mkClusterSystem {
@@ -109,6 +120,18 @@
       system:
       let
         pkgs = import nixpkgs { inherit system; };
+        bootstrapImage = (
+          mkClusterSystemFor system {
+            hostName = "cluster-bootstrap";
+            role = "agent";
+            privateSharedModule = privateSharedOverrides;
+            extraModules = [
+              {
+                homelab.cluster.enable = false;
+              }
+            ];
+          }
+        ).config.system.build.sdImage;
         validateCluster = pkgs.writeShellApplication {
           name = "validate-cluster-node";
           text = ''
@@ -171,6 +194,7 @@
         };
       in
       {
+        packages.bootstrap-sd-image = bootstrapImage;
         packages.validate-cluster-node = validateCluster;
         packages.deploy-cluster-node = deployNode;
 
