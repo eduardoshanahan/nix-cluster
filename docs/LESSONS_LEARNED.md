@@ -61,6 +61,40 @@ before flashing.
 Once a node boots and SSH works, we should strongly prefer a Nix deploy path
 instead of falling back to full SD-card rebuilds for normal iteration.
 
+### A remote builder must be a signed builder
+
+Today we proved a narrower but very important version of the deploy lesson:
+
+- `--build-host` is not enough by itself
+- if the builder does not sign locally built outputs, targets with
+  `require-sigs = true` will reject those store paths
+- if the target does not trust the builder public key, the deploy still fails
+
+So the real long-term rule is:
+
+- use a remote ARM builder
+- give that builder a stable signing identity
+- make cluster targets trust that builder key
+
+Without those three pieces together, the "fast post-boot deploy" story is only
+partially implemented.
+
+### Flashed nodes may carry stale `k3s` state
+
+Today we also learned that a flashed node can switch declaratively to a new
+hostname and role while still keeping enough on-disk `k3s` state to behave like
+the old node identity.
+
+Observed symptoms:
+
+- `/etc/hostname` changed
+- runtime hostname lagged until reboot
+- even after reboot, `k3s` could still act like an old embedded cluster member
+- wiping `/var/lib/rancher/k3s` was needed to get a clean join
+
+That means first-boot post-image conversion needs an explicit stale-state check
+or cleanup step in the runbook.
+
 ### Use fresh build outputs when debugging
 
 Fresh output names and direct artifact inspection are safer than trusting a
