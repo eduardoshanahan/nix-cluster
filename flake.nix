@@ -261,12 +261,25 @@
             exec kubectl kustomize --enable-helm "$PWD/kubernetes/observability"
           '';
         };
+        renderHeadlamp = pkgs.writeShellApplication {
+          name = "render-headlamp";
+          runtimeInputs = [
+            pkgs.kubectl
+            pkgs.kubernetes-helm
+          ];
+          text = ''
+            set -euo pipefail
+
+            exec kubectl kustomize --enable-helm "$PWD/kubernetes/operations"
+          '';
+        };
       in
       {
         packages.bootstrap-sd-image = bootstrapImage;
         packages.validate-cluster-node = validateCluster;
         packages.deploy-cluster-node = deployNode;
         packages.render-observability = renderObservability;
+        packages.render-headlamp = renderHeadlamp;
 
         apps.validate-cluster-node = {
           type = "app";
@@ -281,6 +294,11 @@
         apps.render-observability = {
           type = "app";
           program = "${renderObservability}/bin/render-observability";
+        };
+
+        apps.render-headlamp = {
+          type = "app";
+          program = "${renderHeadlamp}/bin/render-headlamp";
         };
 
         devShells.default = pkgs.mkShell {

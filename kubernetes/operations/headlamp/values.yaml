@@ -1,0 +1,17 @@
+service:
+  type: NodePort
+  nodePort: 30081
+
+config:
+  inCluster: true
+  oidc:
+    secret:
+      create: false
+
+serviceAccount:
+  create: true
+  name: headlamp-admin
+
+clusterRoleBinding:
+  create: true
+  clusterRoleName: cluster-admin
