@@ -13,3 +13,6 @@ helmCharts:
     version: 0.40.1
     namespace: headlamp
     valuesFile: values.yaml
+
+patches:
+  - path: deployment-args-patch.yaml
