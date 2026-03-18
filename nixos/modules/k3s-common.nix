@@ -37,6 +37,7 @@ lib.mkIf config.homelab.cluster.enable (
           [
             22
             10250
+            30080
             config.homelab.observability.nodeExporter.port
           ]
           ++ lib.optionals isServer [
