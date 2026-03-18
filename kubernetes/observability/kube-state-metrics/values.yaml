@@ -16,6 +16,3 @@ resources:
   limits:
     cpu: 250m
     memory: 256Mi
-
-podLabels:
-  app.kubernetes.io/part-of: observability
