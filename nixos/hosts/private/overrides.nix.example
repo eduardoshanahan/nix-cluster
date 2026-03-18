@@ -7,6 +7,9 @@
 
   homelab.domain = "<homelab-domain>";
   homelab.cluster.apiServerEndpoint = "https://cluster-api.<homelab-domain>:6443";
+  homelab.nix.trustedBuilderPublicKeys = [
+    "rpi-box-01:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  ];
 
   # Set this to a private shared bootstrap token before building images.
   homelab.cluster.clusterToken = "replace-with-a-private-bootstrap-token";

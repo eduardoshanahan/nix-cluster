@@ -33,6 +33,24 @@ The cluster should be built around:
 The goal is to make the cluster easier to understand, safer to iterate on, and
 more aligned with good NixOS and homelab practices.
 
+## Current Rollout Direction
+
+The active rollout plan is:
+
+- keep the shared bootstrap-image workflow
+- use post-boot deploys for node conversion
+- use `rpi-box-01` as the shared ARM builder
+- make cluster nodes trust the builder signing key through
+  `homelab.nix.trustedBuilderPublicKeys`
+- preserve a first-boot recovery path for stale `k3s` state
+
+The deploy helper in this repo now supports both:
+
+- cross-host deploys with `--build-host`
+- explicit target self-builds with `--self-build`
+
+See `docs/NEXT_SESSION_ROLLOUT_NOTES_2026-03-17.md` for the operator runbook.
+
 ## Start Here
 
 - `HOMELAB_AND_CLUSTER_CONTEXT.md`
