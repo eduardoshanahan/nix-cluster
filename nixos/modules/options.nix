@@ -37,6 +37,22 @@
         };
       };
 
+      observability = {
+        nodeExporter = {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Whether to expose Prometheus node_exporter on cluster nodes.";
+          };
+
+          port = lib.mkOption {
+            type = lib.types.port;
+            default = 9100;
+            description = "TCP port used by Prometheus node_exporter on cluster nodes.";
+          };
+        };
+      };
+
       cluster = {
         enable = lib.mkOption {
           type = lib.types.bool;
