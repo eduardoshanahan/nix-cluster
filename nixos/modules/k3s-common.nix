@@ -3,12 +3,7 @@ let
   isServer = config.homelab.cluster.nodeRole == "server";
   apiServerHostMatch = builtins.match "https://([^:/]+)(:[0-9]+)?(/.*)?" config.homelab.cluster.apiServerEndpoint;
   apiServerHost = if apiServerHostMatch == null then null else builtins.elemAt apiServerHostMatch 0;
-  commonFlags = [
-    "--cluster-cidr=${config.homelab.cluster.clusterCidr}"
-    "--service-cidr=${config.homelab.cluster.serviceCidr}"
-    "--disable=servicelb"
-    "--disable=traefik"
-  ];
+  commonFlags = [ ];
 
   serverTlsSans = lib.unique (
     [ config.networking.hostName ]
@@ -17,7 +12,13 @@ let
   );
 
   serverOnlyFlags =
-    [ "--write-kubeconfig-mode=0644" ]
+    [
+      "--disable=servicelb"
+      "--disable=traefik"
+      "--cluster-cidr=${config.homelab.cluster.clusterCidr}"
+      "--service-cidr=${config.homelab.cluster.serviceCidr}"
+      "--write-kubeconfig-mode=0644"
+    ]
     ++ map (san: "--tls-san=${san}") serverTlsSans;
 in
 lib.mkIf config.homelab.cluster.enable (
