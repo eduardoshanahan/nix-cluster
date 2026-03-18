@@ -27,5 +27,8 @@
     "flakes"
   ];
 
+  nix.settings.require-sigs = lib.mkDefault true;
+  nix.settings.trusted-public-keys = config.homelab.nix.trustedBuilderPublicKeys;
+
   system.stateVersion = "24.11";
 }

@@ -9,6 +9,7 @@ This directory is for local use only and should not be committed.
 - SSH authorized keys
 - node IP addressing choices if they are environment-specific
 - cluster bootstrap token
+- trusted Nix builder public keys
 - real homelab domain values
 - future certificate paths or other secret-adjacent local configuration
 
@@ -37,6 +38,9 @@ the admin SSH keys, the homelab domain, and the shared cluster bootstrap token.
 
   homelab.cluster.apiServerEndpoint = "https://cluster-api.<homelab-domain>:6443";
   homelab.cluster.clusterToken = "replace-with-a-private-token";
+  homelab.nix.trustedBuilderPublicKeys = [
+    "rpi-box-01:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  ];
 }
 ```
 

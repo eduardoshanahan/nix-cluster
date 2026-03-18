@@ -26,6 +26,17 @@
         description = "Default domain placeholder overridden in private config.";
       };
 
+      nix = {
+        trustedBuilderPublicKeys = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          description = ''
+            Nix signing public keys trusted by cluster nodes for cross-host
+            store-path copies, such as a shared ARM builder.
+          '';
+        };
+      };
+
       cluster = {
         enable = lib.mkOption {
           type = lib.types.bool;
