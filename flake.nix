@@ -289,9 +289,12 @@
             pkgs.nixfmt-rfc-style
             pkgs.prek
             pkgs.kubectl
+            pkgs.kubectx
+            pkgs.k9s
             pkgs.kustomize
             pkgs.kubernetes-helm
             pkgs.k3s
+            pkgs.stern
           ];
 
           shellHook = ''
