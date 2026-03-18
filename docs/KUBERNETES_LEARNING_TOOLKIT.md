@@ -13,6 +13,7 @@ The `nix-cluster` dev shell includes:
 
 - `kubectl`
 - `k9s`
+- `Headlamp` is deployed in-cluster as a visual UI
 - `helm`
 - `kustomize`
 - `stern`
