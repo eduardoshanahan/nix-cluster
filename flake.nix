@@ -179,17 +179,74 @@
           text = ''
             set -euo pipefail
 
-            if [ "$#" -lt 2 ]; then
-              echo "usage: deploy-cluster-node <nixosConfiguration> <target-host>" >&2
+            ssh_opts=''${NIX_CLUSTER_SSHOPTS:-"-F /dev/null -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5"}
+            build_host=''${NIX_CLUSTER_BUILD_HOST:-}
+            self_build=0
+
+            usage() {
+              cat >&2 <<'EOF'
+            usage: deploy-cluster-node [--build-host <host>] [--self-build] <nixosConfiguration> <target-host>
+
+              --build-host <host>  Build on a remote ARM builder before deploying.
+              --self-build         Build on the target host itself.
+
+            Environment:
+              NIX_CLUSTER_BUILD_HOST  Default remote builder host if --build-host is not passed.
+              NIX_CLUSTER_SSHOPTS     SSH options exported to NIX_SSHOPTS.
+            EOF
               exit 1
+            }
+
+            while [ "$#" -gt 0 ]; do
+              case "$1" in
+                --build-host)
+                  [ "$#" -ge 2 ] || usage
+                  build_host="$2"
+                  shift 2
+                  ;;
+                --self-build)
+                  self_build=1
+                  shift
+                  ;;
+                --help|-h)
+                  usage
+                  ;;
+                --*)
+                  echo "unknown option: $1" >&2
+                  usage
+                  ;;
+                *)
+                  break
+                  ;;
+              esac
+            done
+
+            if [ "$#" -ne 2 ]; then
+              usage
             fi
 
             node="$1"
             target="$2"
 
-            nixos-rebuild switch \
-              --flake "path:$PWD#$node" \
+            if [ "$self_build" -eq 1 ]; then
+              build_host="$target"
+            fi
+
+            export NIX_SSHOPTS="$ssh_opts"
+
+            rebuild_cmd=(
+              /run/current-system/sw/bin/nixos-rebuild
+              switch
+              --flake "path:$PWD#$node"
               --target-host "$target"
+              --sudo
+            )
+
+            if [ -n "$build_host" ]; then
+              rebuild_cmd+=(--build-host "$build_host")
+            fi
+
+            "''${rebuild_cmd[@]}"
           '';
         };
       in
