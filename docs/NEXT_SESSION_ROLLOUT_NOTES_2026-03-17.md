@@ -15,37 +15,36 @@ ssh -F /dev/null -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o Connect
 ssh -F /dev/null -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5 operator@192.0.2.35 'hostname; systemctl is-active k3s'
 ```
 
+Expected healthy end-state after the March 18 session:
+
+- `.31` through `.35` should all report their correct hostnames
+- `.31`, `.32`, `.33` should be control-plane nodes
+- `.34`, `.35` should be worker nodes
+- `sudo k3s kubectl get nodes -o wide` on `.31` should show all five nodes
+  `Ready`
+
 ## Do Not Repeat These Dead Ends
 
-Do not start by using:
+Do not fall back to the old assumption that a plain deploy helper invocation is
+enough in every case:
 
 ```bash
 nix run .#deploy-cluster-node -- cluster-pi-0N operator@192.0.2.3N
 ```
 
-Reason:
+That is now valid only when the target already trusts the configured builder or
+when `NIX_CLUSTER_BUILD_HOST` is set appropriately.
 
-- current helper does not handle `aarch64-linux` build-host requirements
+Do not bypass the repo helper with ad hoc `nixos-rebuild` commands unless you
+have a specific recovery reason. The helper now bakes in the SSH behavior and
+builder flow that worked.
 
-Do not assume this will work either:
+The earlier builder dead end is resolved now, but it is still useful to
+remember why it failed before:
 
-```bash
-/run/current-system/sw/bin/nixos-rebuild switch \
-  --flake path:/home/eduardo/Programming/gitea.<homelab-domain>/nix-cluster#cluster-pi-0N \
-  --build-host operator@192.0.2.58 \
-  --target-host operator@192.0.2.3N \
-  --sudo
-```
-
-Reason:
-
-- `rpi-box-01` is not signing its outputs today
-- targets reject cross-host store copies because `require-sigs = true`
-
-That dead end only goes away after both of these are true:
-
-- `rpi-box-01` signs its locally built outputs
-- cluster nodes trust the `rpi-box-01` public signing key
+- unsigned cross-host store paths were rejected by targets
+- builder trust had to be configured explicitly on cluster nodes
+- first-conversion nodes still needed recovery steps even after trust was fixed
 
 ## Current Intended Tactic
 
@@ -127,8 +126,10 @@ ssh -F /dev/null -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o Connect
 If hostname mismatch or stale cluster behavior appears:
 
 1. reboot once
-2. if still stale, wipe `/var/lib/rancher/k3s`
-3. restart `k3s`
+2. if still stale as a control-plane node, wipe `/var/lib/rancher/k3s`
+3. if still stale as a worker, wipe `/var/lib/rancher/k3s` and
+   `/etc/rancher/node/password`
+4. restart `k3s`
 
 ## `.32` Recovery Pattern That Worked
 
@@ -142,21 +143,41 @@ This sequence mattered:
 6. start `k3s`
 7. verify join from `.31`
 
-That is the best evidence we have for what may also be needed on `.33` to `.35`.
+That is the best evidence we have for what may also be needed on future
+control-plane recoveries.
+
+## Worker Recovery Pattern That Worked
+
+For worker first-conversion recovery, the March 18 session showed this pattern:
+
+1. deploy the worker config
+2. observe `/etc/hostname` changed but runtime hostname still stale
+3. reboot once
+4. if the worker still reports duplicate hostname or node-password rejection:
+5. stop `k3s`
+6. wipe `/var/lib/rancher/k3s`
+7. delete `/etc/rancher/node/password`
+8. start `k3s`
+9. verify join from `.31`
+
+This was the sequence that finally brought `cluster-pi-05` in cleanly.
 
 ## Rollout Order
 
-Once builder trust is working, continue in this order:
+The original rollout order is now complete:
 
 1. `cluster-pi-03` at `192.0.2.33`
 2. `cluster-pi-04` at `192.0.2.34`
 3. `cluster-pi-05` at `192.0.2.35`
 
-For each node:
+For future node recovery or rebuild work, keep this checklist:
 
 1. deploy the intended config with `rpi-box-01` as build host
 2. verify runtime hostname and `/etc/hostname`
 3. reboot once if hostname or live identity is stale
-4. wipe `/var/lib/rancher/k3s` if old embedded-cluster behavior remains
-5. restart `k3s`
-6. verify from `cluster-pi-01`
+4. if it is a control-plane node and old embedded-cluster behavior remains,
+   wipe `/var/lib/rancher/k3s`
+5. if it is a worker and duplicate-hostname / node-password rejection remains,
+   wipe `/var/lib/rancher/k3s` and `/etc/rancher/node/password`
+6. restart `k3s`
+7. verify from `cluster-pi-01`

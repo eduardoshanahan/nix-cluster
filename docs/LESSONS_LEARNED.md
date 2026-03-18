@@ -31,10 +31,14 @@ Problems we observed:
 
 ## Concrete Failure We Hit
 
-We hit a worker-node failure caused by a server-only flag being passed to
+We hit a worker-node failure caused by server-only flags being passed to
 `k3s agent`:
 
 - `--write-kubeconfig-mode=0644`
+- `--cluster-cidr=...`
+- `--service-cidr=...`
+- `--disable=servicelb`
+- `--disable=traefik`
 
 That led to repeated worker startup failure and showed that the workflow needed
 stronger validation and cleaner artifact handling.
@@ -94,6 +98,21 @@ Observed symptoms:
 
 That means first-boot post-image conversion needs an explicit stale-state check
 or cleanup step in the runbook.
+
+### Worker joins can also fail on stale node passwords
+
+The March 18 rollout added a second worker-specific stale-state discovery:
+
+- a worker can keep a stale `/etc/rancher/node/password`
+- after hostname conversion, the agent may be rejected for duplicate hostname
+  or mismatched node password
+
+That means worker recovery can require cleaning two locations together:
+
+- `/var/lib/rancher/k3s`
+- `/etc/rancher/node/password`
+
+if reboot alone does not let the worker rejoin cleanly.
 
 ### Use fresh build outputs when debugging
 
