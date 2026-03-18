@@ -249,11 +249,24 @@
             "''${rebuild_cmd[@]}"
           '';
         };
+        renderObservability = pkgs.writeShellApplication {
+          name = "render-observability";
+          runtimeInputs = [
+            pkgs.kubectl
+            pkgs.kubernetes-helm
+          ];
+          text = ''
+            set -euo pipefail
+
+            exec kubectl kustomize --enable-helm "$PWD/kubernetes/observability"
+          '';
+        };
       in
       {
         packages.bootstrap-sd-image = bootstrapImage;
         packages.validate-cluster-node = validateCluster;
         packages.deploy-cluster-node = deployNode;
+        packages.render-observability = renderObservability;
 
         apps.validate-cluster-node = {
           type = "app";
@@ -265,12 +278,19 @@
           program = "${deployNode}/bin/deploy-cluster-node";
         };
 
+        apps.render-observability = {
+          type = "app";
+          program = "${renderObservability}/bin/render-observability";
+        };
+
         devShells.default = pkgs.mkShell {
           packages = [
             pkgs.git
             pkgs.nixfmt-rfc-style
             pkgs.prek
             pkgs.kubectl
+            pkgs.kustomize
+            pkgs.kubernetes-helm
             pkgs.k3s
           ];
 

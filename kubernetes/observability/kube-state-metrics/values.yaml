@@ -1,0 +1,20 @@
+prometheusScrape: true
+
+service:
+  type: ClusterIP
+  port: 8080
+
+prometheus:
+  monitor:
+    enabled: false
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi
+
+podLabels:
+  app.kubernetes.io/part-of: observability
