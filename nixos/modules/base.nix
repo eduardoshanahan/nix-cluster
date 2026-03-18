@@ -30,5 +30,11 @@
   nix.settings.require-sigs = lib.mkDefault true;
   nix.settings.trusted-public-keys = config.homelab.nix.trustedBuilderPublicKeys;
 
+  services.prometheus.exporters.node = lib.mkIf config.homelab.observability.nodeExporter.enable {
+    enable = true;
+    port = config.homelab.observability.nodeExporter.port;
+    enabledCollectors = [ "systemd" "filesystem" "meminfo" "netdev" "loadavg" "hwmon" ];
+  };
+
   system.stateVersion = "24.11";
 }
