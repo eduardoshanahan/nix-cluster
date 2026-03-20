@@ -5,7 +5,7 @@ This directory contains services that run on the cluster.
 It exists to keep a clear separation between:
 
 - host provisioning in `nixos/`
-- cluster services and workloads in `kubernetes/`
+- in-cluster services and workloads in `kubernetes/`
 
 ## Packaging Decision
 
@@ -23,12 +23,18 @@ vendor manifests.
 
 Recommended structure:
 
-- `kubernetes/<domain>/kustomization.yaml`: app grouping and shared resources
-- `kubernetes/<domain>/<app>/kustomization.yaml`: app-level composition
-- `kubernetes/<domain>/<app>/values.yaml`: Helm values for third-party charts
-- `kubernetes/<domain>/<app>/*.yaml`: repo-owned manifests and patches
+- `kubernetes/platform/`: shared in-cluster platform components
+- `kubernetes/operations/`: cluster operator tooling
+- `kubernetes/apps/`: migrated or cluster-native applications
 
-The first real workload area is `kubernetes/observability/`.
+Within those areas, keep the existing Kustomize pattern:
+
+- `kubernetes/<area>/<domain>/kustomization.yaml`: grouping and shared resources
+- `kubernetes/<area>/<domain>/<app>/kustomization.yaml`: app-level composition
+- `kubernetes/<area>/<domain>/<app>/values.yaml`: Helm values for third-party charts
+- `kubernetes/<area>/<domain>/<app>/*.yaml`: repo-owned manifests and patches
+
+The first real platform workload area is `kubernetes/platform/observability/`.
 
 ## Build And Apply
 
@@ -55,5 +61,9 @@ The repo dev shell includes the toolchain needed for this workflow:
 Keep host concerns such as firewalling, OS packages, and `k3s` node behavior in
 `nixos/`.
 
-Keep in-cluster applications such as telemetry exporters, ingress objects, and
-future migrated services in `kubernetes/`.
+Keep shared cluster capabilities such as ingress, telemetry components, and
+certificate automation in `kubernetes/platform/`.
+
+Keep operator-facing tools in `kubernetes/operations/`.
+
+Keep migrated applications and service-specific manifests in `kubernetes/apps/`.

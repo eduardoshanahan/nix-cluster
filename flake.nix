@@ -258,7 +258,7 @@
           text = ''
             set -euo pipefail
 
-            exec kubectl kustomize --enable-helm "$PWD/kubernetes/observability"
+            exec kubectl kustomize --enable-helm "$PWD/kubernetes/platform/observability"
           '';
         };
         renderHeadlamp = pkgs.writeShellApplication {
