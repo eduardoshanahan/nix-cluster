@@ -56,6 +56,12 @@ The repo dev shell includes the toolchain needed for this workflow:
 - `kustomize`
 - `helm`
 
+Build all current platform workloads with:
+
+```bash
+nix run .#render-platform
+```
+
 ## Scope Boundary
 
 Keep host concerns such as firewalling, OS packages, and `k3s` node behavior in

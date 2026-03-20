@@ -4,7 +4,7 @@
 
 - Headlamp is installed in this repo under [kubernetes/operations/headlamp](/home/eduardo/Programming/gitea.<homelab-domain>/nix-cluster/kubernetes/operations/headlamp).
 - Deployment pattern is `Kustomize` with a Helm chart.
-- Headlamp is exposed with a `NodePort` on `30081`.
+- Headlamp now uses an internal `ClusterIP` service and a standard Kubernetes `Ingress`.
 - The user created the DNS name `headlamp.<homelab-domain>`.
 
 ## Important Fix Already Applied
@@ -15,35 +15,31 @@
 
 ## Verified Working
 
-- `cluster-pi-01` was deployed with firewall port `30081` open.
+- cluster ingress now expects Traefik to own ports `80` and `443` on cluster nodes.
 - The `headlamp` namespace exists.
-- The Headlamp pod is `Running`.
-- The Headlamp service has endpoints.
-- `curl -I http://headlamp.<homelab-domain>:30081/` returned `HTTP/1.1 200 OK` from this machine.
-- `curl -I http://headlamp.<homelab-domain>:30081/` also returned `HTTP/1.1 200 OK` from `cluster-pi-01`.
-- `localhost:30081` on `cluster-pi-01` did not answer, but the node IP and FQDN did. That did not block the working path.
+- The Headlamp pod and `headlamp` service are still the backend.
+- Traefik is now the intended front door for `headlamp.<homelab-domain>`.
 
-## Open Issue To Investigate
+## Current Next Check
 
-- From another host, `http://headlamp.<homelab-domain>:30081/` timed out.
-- Since the service works from this machine and from `cluster-pi-01`, the likely causes are:
-  - stale or wrong DNS on the failing host
-  - network or firewall reachability from that host to `192.0.2.31:30081`
-  - browser cache, HTTPS forcing, or HSTS on that host
+- verify Traefik is listening on cluster node ports `80` and `443`
+- verify `http://headlamp.<homelab-domain>/` resolves and reaches the ingress
+- only add HTTPS after the cluster Traefik instance has a Kubernetes TLS secret
+  backed by the chosen homelab certificate material
 
 ## Commands To Run On The Failing Host
 
 ```bash
 getent ahosts headlamp.<homelab-domain>
-curl -I --max-time 10 http://headlamp.<homelab-domain>:30081/
-curl -I --max-time 10 http://192.0.2.31:30081/
-nc -vz 192.0.2.31 30081
+curl -I --max-time 10 http://headlamp.<homelab-domain>/
+curl -I --max-time 10 http://192.0.2.31/
+nc -vz 192.0.2.31 80
 ```
 
 ## How To Read The Results
 
-- If the hostname fails but the IP works, it is a DNS issue.
-- If both hostname and IP fail, it is a network or firewall path issue from that host.
+- If the hostname fails but the node IP works, it is a DNS issue.
+- If both hostname and node IP fail, it is a network or firewall path issue from that host.
 - If `curl` works but the browser fails, it is likely a browser cache, HTTPS, or HSTS issue.
 
 ## Workflow Reminder
@@ -53,4 +49,4 @@ nc -vz 192.0.2.31 30081
 
 ## Possible Follow-Up Improvement
 
-- Move Headlamp off `NodePort` and behind ingress or a reverse proxy so it can use a clean hostname without `:30081`, and later add TLS.
+- Reuse the same wildcard or internal CA certificate pattern as the rest of the homelab by creating a Kubernetes TLS secret for Traefik and then enabling `Ingress.spec.tls`.

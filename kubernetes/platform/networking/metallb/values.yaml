@@ -1,0 +1,9 @@
+frrk8s:
+  enabled: false
+
+speaker:
+  frr:
+    enabled: false
+
+prometheus:
+  scrapeAnnotations: false

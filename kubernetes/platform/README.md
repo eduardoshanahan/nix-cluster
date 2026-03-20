@@ -20,3 +20,14 @@ Do not place Raspberry Pi host concerns here. Those belong in `nixos/`.
 
 Do not place migrated user-facing applications here. Those belong in
 `kubernetes/apps/`.
+
+Build all platform manifests with:
+
+```bash
+nix run .#render-platform
+```
+
+Current networking components under `kubernetes/platform/networking/` include:
+
+- `traefik` for ingress
+- `metallb` for bare-metal `LoadBalancer` IPs

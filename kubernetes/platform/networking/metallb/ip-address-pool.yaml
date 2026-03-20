@@ -1,0 +1,8 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: homelab-lan
+  namespace: metallb-system
+spec:
+  addresses:
+    - 192.0.2.36-192.0.2.40

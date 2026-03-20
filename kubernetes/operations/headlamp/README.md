@@ -6,17 +6,17 @@ inspection.
 Current deployment shape:
 
 - namespace: `headlamp`
-- service type: `NodePort`
-- exposed port: `30081`
+- service type: `ClusterIP`
+- ingress hostname: `headlamp.<homelab-domain>`
 - service account role: `cluster-admin`
 
-This is intentionally convenient for a private homelab, but it should remain an
-internal-only tool.
+This remains an internal-only tool. It is now intended to sit behind the
+cluster Traefik ingress instead of being exposed directly via a `NodePort`.
 
 After deployment, access it at:
 
 ```text
-http://cluster-pi-01.<homelab-domain>:30081/
+http://headlamp.<homelab-domain>/
 ```
 
 Build the manifests with:
