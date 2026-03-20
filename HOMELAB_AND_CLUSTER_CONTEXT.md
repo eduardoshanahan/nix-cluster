@@ -91,7 +91,8 @@ understandable for someone who is still learning Kubernetes.
 That includes keeping a clean boundary between:
 
 - the Raspberry Pi hosts and their operating-system configuration
-- the cluster services and workloads that will eventually run on top of them
+- the shared cluster platform services that make Kubernetes usable
+- the applications and workloads that will eventually run on top of that
 
 ## Repository Working Rule
 

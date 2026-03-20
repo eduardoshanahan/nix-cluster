@@ -146,8 +146,8 @@ For this repository, cluster workloads should be organized with:
 - plain YAML for repo-owned glue resources such as namespaces and future
   ingress or policy objects
 
-Phase 2 should establish that pattern rather than introducing a one-off
-deployment style.
+Phase 2 should establish that pattern under `kubernetes/platform/` rather than
+introducing a one-off deployment style.
 
 ### Step 1. Start with `kube-state-metrics`
 

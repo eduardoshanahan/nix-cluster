@@ -65,8 +65,9 @@ See `docs/NEXT_SESSION_ROLLOUT_NOTES_2026-03-17.md` for the operator runbook.
 - `nixos/profiles/`: reusable profiles
 - `nixos/hosts/`: public node definitions
 - `nixos/hosts/private/`: gitignored environment-specific overrides
-- `kubernetes/`: in-cluster service definitions, using Kustomize as the
-  top-level layout and Helm selectively for upstream apps
+- `kubernetes/`: in-cluster definitions, split into shared platform services,
+  operator tooling, and future applications, using Kustomize as the top-level
+  layout and Helm selectively for upstream apps
 - `docs/`: operator documentation and planning
 
 ## Working Rule

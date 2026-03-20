@@ -73,9 +73,9 @@ Do not introduce a full GitOps controller yet.
 
 Phase 2 observability should establish:
 
-- `kubernetes/observability/kustomization.yaml`
-- `kubernetes/observability/namespace.yaml`
-- `kubernetes/observability/kube-state-metrics/`
+- `kubernetes/platform/observability/kustomization.yaml`
+- `kubernetes/platform/observability/namespace.yaml`
+- `kubernetes/platform/observability/kube-state-metrics/`
 
 ## Follow-On Direction
 
