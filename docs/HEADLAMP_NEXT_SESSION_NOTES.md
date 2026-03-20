@@ -6,6 +6,9 @@
 - Deployment pattern is `Kustomize` with a Helm chart.
 - Headlamp now uses an internal `ClusterIP` service and a standard Kubernetes `Ingress`.
 - The user created the DNS name `headlamp.<homelab-domain>`.
+- Traefik now sits behind MetalLB on `192.0.2.36`.
+- Pi-hole should point ingress hostnames at `192.0.2.36`, not at a node IP.
+- Headlamp now serves over HTTPS with the shared homelab wildcard certificate.
 
 ## Important Fix Already Applied
 
@@ -20,26 +23,57 @@
 - The Headlamp pod and `headlamp` service are still the backend.
 - Traefik is now the intended front door for `headlamp.<homelab-domain>`.
 
-## Current Next Check
+## Operator Runbook
 
-- verify Traefik is listening on cluster node ports `80` and `443`
-- verify `http://headlamp.<homelab-domain>/` resolves and reaches the ingress
-- only add HTTPS after the cluster Traefik instance has a Kubernetes TLS secret
-  backed by the chosen homelab certificate material
-
-## Commands To Run On The Failing Host
+### Verify Access Path
 
 ```bash
 getent ahosts headlamp.<homelab-domain>
 curl -I --max-time 10 http://headlamp.<homelab-domain>/
-curl -I --max-time 10 http://192.0.2.31/
-nc -vz 192.0.2.31 80
+curl -k -I --max-time 10 https://headlamp.<homelab-domain>/
+curl -I --max-time 10 http://192.0.2.36/
+curl -k -I --max-time 10 https://192.0.2.36/ -H 'Host: headlamp.<homelab-domain>'
 ```
+
+### Refresh The Shared TLS Secret
+
+The cluster currently reuses the wildcard certificate from `rpi-box-01`.
+
+```bash
+ssh -F /dev/null -o StrictHostKeyChecking=accept-new -o BatchMode=yes operator@192.0.2.10 \
+  'sudo cat /run/secrets/traefik/tls.crt' >/tmp/homelab-wildcard.crt
+
+ssh -F /dev/null -o StrictHostKeyChecking=accept-new -o BatchMode=yes operator@192.0.2.10 \
+  'sudo cat /run/secrets/traefik/tls.key' >/tmp/homelab-wildcard.key
+
+ssh -F /dev/null -o StrictHostKeyChecking=accept-new -o BatchMode=yes operator@192.0.2.31 \
+  'cat >/tmp/homelab-wildcard.crt' </tmp/homelab-wildcard.crt
+
+ssh -F /dev/null -o StrictHostKeyChecking=accept-new -o BatchMode=yes operator@192.0.2.31 \
+  'cat >/tmp/homelab-wildcard.key' </tmp/homelab-wildcard.key
+
+ssh -F /dev/null -o StrictHostKeyChecking=accept-new -o BatchMode=yes operator@192.0.2.31 \
+  'sudo k3s kubectl -n headlamp create secret tls <private-ingress-tls-secret> \
+    --cert=/tmp/homelab-wildcard.crt \
+    --key=/tmp/homelab-wildcard.key \
+    --dry-run=client -o yaml | sudo k3s kubectl apply -f -'
+```
+
+If you refresh the secret manually, clean up the temporary files afterwards.
+
+### Mint A Fresh Headlamp Token
+
+```bash
+ssh -F /dev/null -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5 operator@192.0.2.31 \
+  'sudo k3s kubectl -n headlamp create token headlamp-admin'
+```
+
+This token is currently full `cluster-admin`.
 
 ## How To Read The Results
 
-- If the hostname fails but the node IP works, it is a DNS issue.
-- If both hostname and node IP fail, it is a network or firewall path issue from that host.
+- If the hostname fails but `192.0.2.36` works, it is a DNS issue.
+- If both hostname and `192.0.2.36` fail, it is a network or ingress issue.
 - If `curl` works but the browser fails, it is likely a browser cache, HTTPS, or HSTS issue.
 
 ## Workflow Reminder
@@ -49,4 +83,4 @@ nc -vz 192.0.2.31 80
 
 ## Possible Follow-Up Improvement
 
-- Reuse the same wildcard or internal CA certificate pattern as the rest of the homelab by creating a Kubernetes TLS secret for Traefik and then enabling `Ingress.spec.tls`.
+- Replace the ad hoc `cluster-admin` token flow with a safer auth model for Headlamp.
