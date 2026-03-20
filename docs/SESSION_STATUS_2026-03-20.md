@@ -29,6 +29,11 @@ This keeps the same spirit as the broader homelab split between `nix-pi` and
 - added `kubernetes/apps/README.md`
 - updated top-level Kubernetes docs to teach the new structure
 - updated the observability render helper in `flake.nix` to use the new path
+- added `kubernetes/platform/networking/traefik/` for repo-managed Traefik
+- added `kubernetes/platform/networking/metallb/` for bare-metal `LoadBalancer`
+  IP management
+- moved Headlamp to a `ClusterIP` backend with an `Ingress`
+- added a `render-platform` helper for the full platform tree
 
 ## Verification Completed
 
@@ -36,6 +41,7 @@ The following repo helpers rendered successfully after the move:
 
 - `nix run .#render-observability`
 - `nix run .#render-headlamp`
+- `nix run .#render-platform`
 
 That confirms the current platform and operations trees still render cleanly.
 
@@ -49,31 +55,34 @@ Use these boundaries going forward:
 - `kubernetes/operations/`: cluster UI and operator-facing admin tools
 - `kubernetes/apps/`: migrated homelab applications and app-specific manifests
 
-## Recommended Next Step
+## Current Platform Direction
 
-The next logical platform addition is Traefik, managed as a normal cluster
-workload rather than re-enabling the bundled K3s Traefik addon.
+Traefik is now the intended cluster ingress controller, managed as a normal
+repo-owned workload rather than by re-enabling the bundled K3s addon.
 
-Recommended placement:
+Current placement:
 
 - `kubernetes/platform/networking/traefik/`
+- `kubernetes/platform/networking/metallb/`
 
-Reasoning:
+Current Headlamp access direction:
 
-- the rest of the homelab already uses Traefik
-- the cluster can stay consistent with the existing operator mental model
-- keeping it repo-managed preserves the clean boundary already established in
-  `nix-cluster`
+- `headlamp.<homelab-domain>` should route through cluster Traefik
+- TLS now reuses the same homelab wildcard certificate strategy via a
+  Kubernetes TLS secret
+- HTTP now redirects to HTTPS at the Traefik entrypoint
+- Traefik is now intended to sit behind MetalLB on a stable LAN IP instead of
+  being tied to a specific node IP
+- the current pinned Traefik `LoadBalancer` IP is `192.0.2.36`
 
 ## Suggested Follow-Up Sequence
 
-1. Scaffold the Traefik area under `kubernetes/platform/`
-2. Decide whether the platform grouping should be `networking/traefik/` or
-   `ingress/traefik/`
-3. Start with standard Kubernetes `Ingress` resources before adding
-   Traefik-specific CRDs
-4. Keep K3s packaged `traefik` disabled
-5. Revisit MetalLB and cert-manager after Traefik is in place
+1. Point Pi-hole ingress hostnames at `192.0.2.36`
+2. Keep new cluster apps behind Traefik using standard Kubernetes `Ingress`
+3. Reuse the homelab wildcard TLS secret for additional `*.<homelab-domain>`
+   ingresses where appropriate
+4. Revisit cert-manager only if in-cluster certificate lifecycle becomes worth
+   the added complexity
 
 ## Working Rule
 

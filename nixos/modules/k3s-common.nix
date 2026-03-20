@@ -36,6 +36,8 @@ lib.mkIf config.homelab.cluster.enable (
         allowedTCPPorts =
           [
             22
+            80
+            443
             10250
             30080
             30081

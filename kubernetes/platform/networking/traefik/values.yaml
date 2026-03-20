@@ -1,0 +1,78 @@
+deployment:
+  kind: Deployment
+  replicas: 2
+
+hostNetwork: false
+
+service:
+  enabled: true
+  type: LoadBalancer
+  spec:
+    loadBalancerIP: 192.0.2.36
+
+metrics:
+  prometheus: null
+
+providers:
+  kubernetesIngress:
+    enabled: true
+    ingressClass: traefik
+  kubernetesCRD:
+    enabled: true
+    ingressClass: traefik
+
+ingressClass:
+  enabled: true
+  isDefaultClass: false
+  name: traefik
+
+api:
+  dashboard: false
+  insecure: false
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+podSecurityContext:
+  runAsGroup: 65532
+  runAsNonRoot: true
+  runAsUser: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+ingressRoute:
+  dashboard:
+    enabled: false
+  healthcheck:
+    enabled: false
+
+ports:
+  metrics:
+    port: 9101
+  web:
+    port: 8000
+    exposedPort: 80
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    port: 8443
+    exposedPort: 443
+  traefik:
+    expose:
+      default: false
+
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/master
+    operator: Exists
+    effect: NoSchedule
