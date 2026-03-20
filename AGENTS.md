@@ -36,8 +36,11 @@ Preserve the separation of concerns that this repo is built around:
 
 - `nixos/` owns Raspberry Pi host provisioning, NixOS configuration, SSH,
   networking, `k3s`, firewalling, validation, and deploy workflow.
-- `kubernetes/` owns in-cluster applications, manifests, Helm values, Kustomize
-  layout, and small repo-owned YAML resources.
+- `kubernetes/platform/` owns shared cluster platform services such as ingress,
+  observability components, and future cluster-wide capabilities.
+- `kubernetes/operations/` owns operator tooling such as cluster UIs and admin
+  helpers.
+- `kubernetes/apps/` owns migrated or cluster-native applications.
 - `docs/` owns runbooks, rollout notes, planning, lessons learned, and session
   handoffs.
 
@@ -101,8 +104,9 @@ Use this mental model when editing:
 - `nixos/profiles/`: reusable role/base profiles
 - `nixos/hosts/`: thin host-specific modules
 - `nixos/hosts/private/`: local-only overrides and sensitive values
-- `kubernetes/observability/`: cluster telemetry workloads
+- `kubernetes/platform/observability/`: cluster telemetry workloads
 - `kubernetes/operations/`: cluster operational tooling
+- `kubernetes/apps/`: application workloads that run on top of the platform
 
 Try to keep host files thin and shared behavior centralized.
 
