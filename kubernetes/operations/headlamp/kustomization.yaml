@@ -5,6 +5,7 @@ namespace: headlamp
 
 resources:
   - namespace.yaml
+  - ingress.yaml
 
 helmCharts:
   - name: headlamp

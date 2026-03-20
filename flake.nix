@@ -261,6 +261,18 @@
             exec kubectl kustomize --enable-helm "$PWD/kubernetes/platform/observability"
           '';
         };
+        renderPlatform = pkgs.writeShellApplication {
+          name = "render-platform";
+          runtimeInputs = [
+            pkgs.kubectl
+            pkgs.kubernetes-helm
+          ];
+          text = ''
+            set -euo pipefail
+
+            exec kubectl kustomize --enable-helm "$PWD/kubernetes/platform"
+          '';
+        };
         renderHeadlamp = pkgs.writeShellApplication {
           name = "render-headlamp";
           runtimeInputs = [
@@ -279,6 +291,7 @@
         packages.validate-cluster-node = validateCluster;
         packages.deploy-cluster-node = deployNode;
         packages.render-observability = renderObservability;
+        packages.render-platform = renderPlatform;
         packages.render-headlamp = renderHeadlamp;
 
         apps.validate-cluster-node = {
@@ -294,6 +307,11 @@
         apps.render-observability = {
           type = "app";
           program = "${renderObservability}/bin/render-observability";
+        };
+
+        apps.render-platform = {
+          type = "app";
+          program = "${renderPlatform}/bin/render-platform";
         };
 
         apps.render-headlamp = {
