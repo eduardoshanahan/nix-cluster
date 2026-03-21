@@ -137,6 +137,14 @@ the task is specifically about recovery or debugging.
 Run Git commands for this directory from inside `nix develop` so the expected
 tooling and hook dependencies are available.
 
+At the start of a session in this repo:
+
+1. enter `nix develop`
+2. run `git fetch origin`
+3. run `git pull --rebase origin main` unless the user explicitly wants a
+   different branch strategy
+4. inspect `git status --short --branch` before making changes
+
 Do not skip Git hooks during normal operations.
 Do not use `--no-verify` unless the user explicitly asks for it or there is a
 documented emergency recovery reason.
@@ -146,6 +154,8 @@ If you need to commit, prefer this flow:
 1. `nix develop`
 2. run formatting, validation, or other expected checks
 3. run normal Git commands without bypassing hooks
+4. push the finished work to `origin` before ending the session when the task is
+   complete and the user has not asked to keep it local
 
 ## Validation Expectations
 
