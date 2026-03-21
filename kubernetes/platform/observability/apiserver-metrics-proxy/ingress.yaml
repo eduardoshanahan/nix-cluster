@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: apiserver-metrics-proxy
+  namespace: observability
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: kube-state-metrics.<homelab-domain>
+      http:
+        paths:
+          - path: /apiserver-metrics
+            pathType: Prefix
+            backend:
+              service:
+                name: apiserver-metrics-proxy
+                port:
+                  number: 8080
+  tls:
+    - hosts:
+        - kube-state-metrics.<homelab-domain>
+      secretName: <private-ingress-tls-secret>

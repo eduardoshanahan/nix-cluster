@@ -10,6 +10,8 @@ spec:
       app.kubernetes.io/name: apiserver-metrics-proxy
   template:
     metadata:
+      annotations:
+        homelab.<homelab-domain>/config-revision: "2"
       labels:
         app.kubernetes.io/name: apiserver-metrics-proxy
     spec:
