@@ -39,11 +39,25 @@ The one unresolved operational detail is:
   and `tailscale.service` was started, but the final SSH-based post-start
   verification commands to that host began timing out
 
-That means the migration is mostly done, but the next session should start by:
+Follow-up progress on 2026-03-21:
 
-- confirming final live health on `rpi-box-02`, especially Tailscale
-- validating the `rpi-box-03` deployment assets again before the first live
-  rollout to that host
+- `rpi-box-03` deployment assets were re-validated
+- the first real `rpi-box-03` remote-builder rollout through `rpi-box-02`
+  completed successfully
+- post-deploy checks confirmed:
+  - `traefik`
+  - `pihole`
+  - `loki`
+  - `promtail`
+  - `tailscale`
+  - `tailscale-reconcile.timer`
+  were all active on `rpi-box-03`
+- `tailscale ping rpi-box-03` succeeded and reached the host directly over
+  `192.168.1.10`
+
+That means the migration rollout is now complete enough to treat `nix-pi` as
+the finished reference for the companion-repo pattern, while keeping the
+`rpi-box-02` Tailscale recovery lesson documented.
 
 ## What Was Changed
 
@@ -283,23 +297,33 @@ That omission was then fixed in the private repo.
 
 ### 3. `rpi-box-03`
 
-Live deployment is still pending.
+The first real live deployment completed on 2026-03-21 with:
 
-What was confirmed instead:
+- target host: `eduardo@rpi-box-03`
+- build host: `eduardo@rpi-box-02`
 
-- target host remains intended as: `eduardo@rpi-box-03`
-- build host remains intended as: `eduardo@rpi-box-02`
-- this remote-builder constraint was preserved exactly as intended
-- local validation now succeeds for the current public/private config pair
+This remote-builder constraint was preserved exactly as intended.
 
-Important follow-up note from 2026-03-21:
+Important deployment-asset note before the rollout:
 
 - the deployment assets were not yet solid enough on first inspection because
   `nix-pi-private/modules/rpi-box-03.nix` referenced `pkgs.systemd` without
   accepting `pkgs`
-- that evaluation bug is now fixed locally
-- do not describe `rpi-box-03` as already rolled out until the first real
-  remote-builder deploy and live checks are complete
+- that evaluation bug was fixed locally first
+- after that fix, both `validate-private-config` and `validate-pi-host` passed
+  again for `rpi-box-03`
+
+Verified live after deploy:
+
+- hostname correct
+- `traefik` active
+- `pihole` active
+- `loki` active
+- `promtail` active
+- `tailscale` active
+- `tailscale-reconcile.timer` active
+- homelab CA file present
+- `tailscale ping rpi-box-03` succeeded and reached the host directly over LAN
 
 ## The `rpi-box-02` Tailscale Follow-Up
 
@@ -468,16 +492,10 @@ Then do this exact next work:
 
 1. Re-check live access to `rpi-box-02`.
 2. Confirm the final live state of `tailscale` on `rpi-box-02`.
-3. Re-run `rpi-box-03` validation and keep the remote-builder procedure ready.
-4. If `rpi-box-02` is healthy and `rpi-box-03` validation stays clean, commit:
-   - `nix-pi`
-   - `nix-pi-private`
-5. If Tailscale is not healthy, fix only that issue first and redeploy only
-   `rpi-box-02`.
-6. Only after the first real `rpi-box-03` deploy and live verification should
-   the rollout be described as complete.
-7. Once `nix-pi` is finished and committed, begin the same companion-repo
-   migration for `nix-services`.
+3. Treat the `nix-pi` companion migration as completed and documented.
+4. Use the `rpi-box-03` remote-builder checklist in `nix-pi` docs as the
+   steady-state operator procedure for future rebuilds.
+5. Begin the same explicit companion-repo migration for `nix-services`.
 
 ## Recommended Success Criteria For The Next Session
 
@@ -486,8 +504,7 @@ The next session should count as successful if it achieves:
 1. final confirmed live health on `rpi-box-02`, including Tailscale
 2. a validated and accurate `rpi-box-03` deployment procedure using
    `rpi-box-02` as builder
-3. first live `rpi-box-03` rollout completed and verified, if that rollout is
-   attempted in the session
+3. first live `rpi-box-03` rollout completed and verified
 4. clean committed state in:
    - `nix-pi`
    - `nix-pi-private`
