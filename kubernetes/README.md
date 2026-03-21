@@ -38,16 +38,23 @@ The first real platform workload area is `kubernetes/platform/observability/`.
 
 ## Build And Apply
 
-When a workload uses Helm-backed Kustomize, build it with:
+When a workload uses Helm-backed Kustomize, build the shared platform stack
+with:
 
 ```bash
-nix run .#render-observability
+nix run .#render-platform
 ```
 
-Apply it with:
+Render the operator tooling separately with:
 
 ```bash
-nix run .#render-observability | kubectl apply -f -
+nix run .#render-headlamp
+```
+
+Apply the platform stack with:
+
+```bash
+nix run .#render-platform | kubectl apply -f -
 ```
 
 The repo dev shell includes the toolchain needed for this workflow:

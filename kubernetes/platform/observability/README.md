@@ -2,7 +2,7 @@
 
 This directory holds cluster-side observability components.
 
-Phase 2 starts with:
+Current components:
 
 - `kube-state-metrics` for Kubernetes object state telemetry
 
@@ -14,15 +14,18 @@ The intended split is:
 
 ## Current Exposure Model
 
-For the first implementation pass, `kube-state-metrics` is exposed via a fixed
-NodePort on TCP `30080`.
+`kube-state-metrics` now stays internal as a `ClusterIP` service and is exposed
+through Traefik ingress.
 
-That is an intentionally simple bridge so the existing external Prometheus host
-can start scraping Kubernetes-aware metrics before a more polished ingress or
-authenticated proxy path is introduced.
+Current intended scrape path:
+
+- `https://kube-state-metrics.<homelab-domain>/metrics`
+
+This keeps cluster telemetry on the ingress path already used by other
+cluster-side services instead of relying on a raw NodePort.
 
 Build the manifests with:
 
 ```bash
-nix run .#render-observability
+nix run .#render-platform
 ```

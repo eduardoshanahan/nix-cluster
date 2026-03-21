@@ -8,8 +8,8 @@ make the cluster usable and operable.
 Examples include:
 
 - ingress controllers such as Traefik
+- networking components such as MetalLB
 - cluster observability components such as `kube-state-metrics`
-- future networking components such as MetalLB or ExternalDNS
 - future certificate automation such as cert-manager
 
 ## Boundary

@@ -1,7 +1,11 @@
+controller:
+  logLevel: info
+
 frrk8s:
   enabled: false
 
 speaker:
+  logLevel: info
   frr:
     enabled: false
 

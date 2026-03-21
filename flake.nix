@@ -290,6 +290,7 @@
         packages.bootstrap-sd-image = bootstrapImage;
         packages.validate-cluster-node = validateCluster;
         packages.deploy-cluster-node = deployNode;
+        packages.render-platform = renderPlatform;
         packages.render-observability = renderObservability;
         packages.render-platform = renderPlatform;
         packages.render-headlamp = renderHeadlamp;
@@ -302,6 +303,11 @@
         apps.deploy-cluster-node = {
           type = "app";
           program = "${deployNode}/bin/deploy-cluster-node";
+        };
+
+        apps.render-platform = {
+          type = "app";
+          program = "${renderPlatform}/bin/render-platform";
         };
 
         apps.render-observability = {
@@ -322,6 +328,8 @@
         devShells.default = pkgs.mkShell {
           packages = [
             pkgs.git
+            pkgs.gitleaks
+            pkgs.deadnix
             pkgs.nixfmt-rfc-style
             pkgs.prek
             pkgs.kubectl

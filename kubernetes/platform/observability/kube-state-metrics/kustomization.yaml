@@ -3,6 +3,9 @@ kind: Kustomization
 
 namespace: observability
 
+resources:
+  - ingress.yaml
+
 helmCharts:
   - name: kube-state-metrics
     releaseName: kube-state-metrics
