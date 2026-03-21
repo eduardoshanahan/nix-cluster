@@ -27,7 +27,8 @@ cross-repo rewrite.
 
 ## Standard Convention
 
-Each public infrastructure repo should move toward this shape:
+Each public infrastructure repo that has evaluation-time private values should
+move toward this shape:
 
 - tracked placeholder private input in the public repo
 - real private values in a sibling private companion repo
@@ -35,7 +36,7 @@ Each public infrastructure repo should move toward this shape:
 - explicit override environment variable
 - explicit validation helper that fails if the placeholder is still active
 
-Recommended sibling layout:
+Recommended sibling layout when a repo truly needs a private companion:
 
 ```text
 ~/Programming/gitea.<homelab-domain>/hhlab-insfrastructure/
@@ -86,115 +87,61 @@ Migration status:
 
 Status:
 
-- highest-priority remaining migration target
+- migrated
 
-Current private locations and assumptions:
-
-- gitignored shared overrides:
-  `nixos/hosts/private/overrides.nix`
-- gitignored host modules:
-  `nixos/hosts/private/rpi-box-01.nix`
-  `nixos/hosts/private/rpi-box-02.nix`
-  `nixos/hosts/private/rpi-box-03.nix`
-- gitignored local operator notes:
-  `private/PROVISIONING_LOCAL.md`
-
-Code-level evidence:
-
-- `nixos/modules/private.nix` conditionally imports
-  `../hosts/private/overrides.nix`
-- `flake.nix` conditionally imports host modules from
-  `./nixos/hosts/private/*.nix`
-- docs repeatedly instruct operators to use `path:.#...` so gitignored private
-  files are visible during evaluation
-
-Private values currently mixed into this model include:
-
-- admin username
-- admin authorized SSH keys
-- domains and hostnames
-- host-specific service enablement and wiring
-- monitoring inventory and host-local runtime divergences
-
-Why this is still brittle:
-
-- the canonical private source is still gitignored state inside the public repo
-- evaluation behavior depends on path-based flakes seeing untracked files
-- private host modules are treated as live config, not just placeholders
-
-Recommended migration shape:
+Current private contract:
 
 - public repo:
   `nix-pi`
-- private companion repo:
+- real private source:
   `nix-pi-private`
 - tracked placeholder:
   `private-config-template/`
 - override variable:
   `NIX_PI_PRIVATE_FLAKE`
 
-Recommended migration phases:
+Current validation story:
 
-1. Move shared private values out of `nixos/hosts/private/overrides.nix` into a
-   sibling private flake.
-2. Move per-host modules into private flake modules with the same host names.
-3. Add `validate-private-config` for shared values needed by image builds and
-   rebuilds.
-4. Add host validation helpers for `rpi-box-01`, `rpi-box-02`, and
-   `rpi-box-03`.
-5. Rewrite docs so the private companion repo becomes canonical and
-   `nixos/hosts/private/` becomes legacy migration scaffolding.
+- `nix run "path:$PWD#validate-private-config" -- <host>`
+- `nix run "path:$PWD#validate-pi-host" -- <host>`
+
+Migration status:
+
+- completed and live on:
+  - `rpi-box-01`
+  - `rpi-box-02`
+  - `rpi-box-03`
+- now serves as the Pi-host reference implementation of the companion pattern
 
 ### `nix-services`
 
 Status:
 
-- medium-priority migration target after `nix-pi`
+- audited after `nix-pi`
 
-Current private assumptions are weaker than `nix-pi`, but they are not yet
-fully standardized.
+Current result:
 
-Current visible private patterns:
+- a real evaluation-time private companion flake is **not currently required**
+- the public repo already evaluates without sibling private files
+- most private inputs are runtime secret paths under `/run/secrets/...`
+- remaining non-secret divergences are host-owned in `nix-pi-private`
 
-- policy docs allow empty placeholder private directories such as:
-  `private/`
-  `hosts-private/`
-- some docs still describe private overlays as a valid extension point
-- many service modules consume runtime secret paths under `/run/secrets/...`
-- several shared service READMEs point to host-local truth in
-  `../nix-pi/nixos/hosts/private/rpi-box-02.nix`
+Reference audit:
 
-Important distinction:
+- `../nix-services/records/NIX_SERVICES_PRIVATE_COMPANION_AUDIT_2026-03-21.md`
 
-- most `nix-services` secret handling is already runtime-path based, which is
-  compatible with public/private separation
-- the bigger problem is lack of one explicit private companion pattern for any
-  shared service-level private overlays or environment-specific operator data
+What this means operationally:
 
-What probably belongs in a future `nix-services-private`:
+- do not create `nix-services-private` just for symmetry
+- keep runtime secret consumption on `/run/secrets/...`
+- keep host-owned exceptions in `nix-pi` / `nix-pi-private`
+- reserve `nix-services-private` for a future case where shared
+  service-level private values are truly needed at evaluation time
 
-- shared service-level private overlay modules, if any are still needed
-- private operator defaults that should not live in `nix-pi`
-- service-side environment-specific values that are not secrets in
-  `/run/secrets` but still should not live in the public repo
+Migration status:
 
-What should stay out of `nix-services-private`:
-
-- decrypted runtime secrets
-- host selection and one-host divergences that belong in `nix-pi`
-- secrets that are already better handled by `sops-nix` and `/run/secrets`
-
-Recommended migration phases:
-
-1. Audit whether `nix-services` actually needs a real evaluation-time private
-   overlay today, or whether its remaining private truth is mostly host-owned in
-   `nix-pi`.
-2. If yes, create `nix-services-private` with a minimal tracked placeholder
-   contract.
-3. Add a validation helper only for values that must exist before service
-   evaluation.
-4. Keep runtime secret consumption on `/run/secrets/...`; do not move those
-   secrets into the companion repo model just because a companion repo exists.
+- audit complete
+- no active companion-flake migration required today
 
 ### `synology-services`
 
@@ -223,24 +170,24 @@ Recommended order:
 2. `nix-services`
 3. `synology-services`
 
-Why `nix-pi` comes first:
+Why `nix-pi` came first:
 
-- it still depends directly on gitignored evaluation-time private modules
-- it is central to host provisioning, bootstrap, and rebuild workflows
-- it currently teaches operators to rely on `path:.#...` for private config
-  visibility
+- it previously depended directly on gitignored evaluation-time private modules
+- it was central to host provisioning, bootstrap, and rebuild workflows
+- it was the highest-value companion-pattern migration target
 
-Why `nix-services` comes second:
+Why `nix-services` was audited second:
 
-- its main secret flow already uses runtime paths rather than tracked values
-- much of its remaining private truth is really host-owned in `nix-pi`
-- it may need less structural migration than `nix-pi`
+- its main secret flow already used runtime paths rather than tracked values
+- much of its remaining private truth was host-owned in `nix-pi`
+- the audit confirmed that no evaluation-time private companion repo is needed
+  right now
 
 Why `synology-services` comes third:
 
 - it has not yet been audited in the same detail
-- it is important, but not the blocking case for standardizing the current
-  Raspberry Pi and cluster workflows
+- it is now the most likely remaining repo that may still benefit from an
+  explicit companion-pattern review
 
 ## Shared Rules For All Future Migrations
 
