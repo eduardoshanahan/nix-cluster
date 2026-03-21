@@ -19,7 +19,6 @@ Use one parent directory on every operator machine:
   nix-pi/
   nix-pi-private/
   nix-services/
-  nix-services-private/
   synology-services/
 ```
 
@@ -36,7 +35,6 @@ Minimum recommended set:
 3. `nix-pi`
 4. `nix-pi-private`
 5. `nix-services`
-6. `nix-services-private`
 
 Clone `synology-services` too if that operator machine will manage the NAS-side
 services.
@@ -67,66 +65,52 @@ Before deploys, validate the specific node you are about to touch.
 
 ### `nix-pi`
 
-This repo has not completed the companion-repo migration yet.
+This repo now follows the companion-repo convention.
 
-Current private workflow:
+Default private path:
 
-- gitignored `nixos/hosts/private/overrides.nix`
-- gitignored `nixos/hosts/private/<host>.nix`
-- path-based flake evaluation to include those files
+- `../nix-pi-private`
 
-Current bootstrap implication:
+Override variable:
 
-- clone `nix-pi`
-- clone `nix-pi-private` as the intended future sibling private repo
-- until the migration lands, ensure the required private config is present in
-  the current expected locations before building or rebuilding hosts
+- `NIX_PI_PRIVATE_FLAKE`
 
-Current validation workaround:
+Preflight validation:
 
-- use path-based flake refs for builds and rebuilds
-- confirm the expected private files exist locally
-- only then run `nix build path:.#...` or `nixos-rebuild --flake path:.#...`
+```bash
+cd ~/Programming/gitea.<homelab-domain>/hhlab-insfrastructure/nix-pi
+nix run "path:$PWD#validate-private-config" -- rpi-box-01
+nix run "path:$PWD#validate-pi-host" -- rpi-box-01
+```
 
-Target post-migration state:
-
-- default private path:
-  `../nix-pi-private`
-- override variable:
-  `NIX_PI_PRIVATE_FLAKE`
-- repo helper:
-  `validate-private-config`
+Before deploys, validate the specific host you are about to touch.
 
 ### `nix-services`
 
-This repo also has not completed the companion-repo migration yet.
+This repo does not currently require an evaluation-time companion repo.
 
 Current private workflow:
 
-- shared modules mostly consume runtime secret paths under `/run/secrets/...`
-- some docs still allow private overlays, but there is not yet one explicit
-  companion-repo contract
+- shared modules consume runtime secret paths under `/run/secrets/...`
+- host-specific private wiring and runtime divergences belong in `nix-pi` /
+  `nix-pi-private`
+- there is no current `private` flake input or required sibling private checkout
+  for evaluation
 
 Current bootstrap implication:
 
 - clone `nix-services`
-- clone `nix-services-private` as the intended future sibling private repo
 - keep runtime secret provisioning in the host layer, normally through
   `nix-pi` plus `sops-nix`
 
-Current validation workaround:
+Current validation reality:
 
 - validate the host-side secret provisioning and service enablement in `nix-pi`
 - do not assume `nix-services` alone owns the missing private truth
 
-Target post-migration state:
+Reference audit:
 
-- default private path:
-  `../nix-services-private`
-- override variable:
-  `NIX_SERVICES_PRIVATE_FLAKE`
-- repo helper:
-  `validate-private-config`
+- `../nix-services/records/NIX_SERVICES_PRIVATE_COMPANION_AUDIT_2026-03-21.md`
 
 ## Standard Operator Rules
 
@@ -151,28 +135,30 @@ Each repo should follow this shape:
 Current implemented override:
 
 - `NIX_CLUSTER_PRIVATE_FLAKE`
-
-Reserved target names for the next migrations:
-
 - `NIX_PI_PRIVATE_FLAKE`
+
+Reserved future-only name if `nix-services` ever gains a real evaluation-time
+private contract:
+
 - `NIX_SERVICES_PRIVATE_FLAKE`
 
 ## Fresh-Machine Checklist
 
 1. Install Nix with flakes enabled.
 2. Clone the public repos.
-3. Clone the matching private companion repos next to them.
+3. Clone the matching private companion repos next to them where the repo
+   actually requires one today.
 4. Enter each repo and run its documented validation helpers.
 5. Only after validation, perform image builds, rebuilds, or deploys.
 
 ## Migration Note
 
-Until `nix-pi` and `nix-services` finish their migrations, this runbook is a
-hybrid:
+This runbook still spans repos with different private models:
 
 - `nix-cluster` already has a fully explicit companion-repo workflow
-- `nix-pi` and `nix-services` are documented here as the intended target shape
-  plus their current temporary validation reality
+- `nix-pi` now also has a fully explicit companion-repo workflow
+- `nix-services` currently relies on public evaluation plus host-owned runtime
+  secrets rather than its own private flake
 
-That temporary mismatch is expected. The point of this runbook is to standardize
-the destination so future migrations converge on one operator story.
+That asymmetry is intentional and reflects the current code reality rather than
+an unfinished migration.
