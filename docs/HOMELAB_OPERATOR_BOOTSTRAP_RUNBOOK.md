@@ -112,6 +112,28 @@ Reference audit:
 
 - `../nix-services/records/NIX_SERVICES_PRIVATE_COMPANION_AUDIT_2026-03-21.md`
 
+### `synology-services`
+
+This repo also does not currently require a sibling private companion repo.
+
+Current private workflow:
+
+- sanitized `.env.example` files are tracked
+- some stacks track encrypted `.env.sops`
+- deploy scripts preserve the NAS-side remote `.env` unless `--update-env` is
+  explicitly requested
+
+Current bootstrap implication:
+
+- clone `synology-services`
+- ensure `sops` is available if you need to decrypt local `.env.sops`
+- treat the NAS-side `.env` as part of the runtime operator state, not as an
+  accidental leftover
+
+Reference audit:
+
+- `../synology-services/PRIVATE_STATE_AUDIT_2026-03-21.md`
+
 ## Standard Operator Rules
 
 On every operator machine:
@@ -159,6 +181,8 @@ This runbook still spans repos with different private models:
 - `nix-pi` now also has a fully explicit companion-repo workflow
 - `nix-services` currently relies on public evaluation plus host-owned runtime
   secrets rather than its own private flake
+- `synology-services` currently relies on encrypted env files plus explicit
+  remote `.env` preservation rather than its own private repo
 
 That asymmetry is intentional and reflects the current code reality rather than
 an unfinished migration.
