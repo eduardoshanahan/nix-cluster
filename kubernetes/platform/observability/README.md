@@ -5,6 +5,8 @@ This directory holds cluster-side observability components.
 Current components:
 
 - `kube-state-metrics` for Kubernetes object state telemetry
+- `apiserver-metrics-proxy` as an internal prototype for authenticated API
+  server metrics collection
 
 Current cluster reality outside this repo-managed slice:
 
@@ -51,6 +53,14 @@ That means the next step is not "open another host port and scrape it".
 
 The next step is to choose a safe authenticated collection model before adding
 control-plane metrics to the homelab monitoring stack.
+
+The current repo-managed prototype for that direction is:
+
+- `apiserver-metrics-proxy`
+  - uses a service account plus RBAC for `/metrics`
+  - fetches API server metrics from `https://kubernetes.default.svc/metrics`
+  - re-exposes them as an internal `ClusterIP` service
+  - intentionally does not add ingress or external scrape wiring yet
 
 Build the manifests with:
 

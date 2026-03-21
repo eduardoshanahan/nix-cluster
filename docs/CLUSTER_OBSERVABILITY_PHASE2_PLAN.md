@@ -89,6 +89,10 @@ Implications:
 - the next implementation pass should focus on authenticated access design or
   an in-cluster collection path, not on opening more host ports casually
 
+Follow-on design document:
+
+- `docs/K3S_CONTROL_PLANE_OBSERVABILITY_PLAN.md`
+
 ## Why This Is A Separate Phase
 
 Phase 1 gives host-level observability with low complexity.
