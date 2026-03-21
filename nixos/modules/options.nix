@@ -26,6 +26,20 @@
         description = "Default domain placeholder overridden in private config.";
       };
 
+      privateConfig = {
+        source = lib.mkOption {
+          type = lib.types.str;
+          default = "private-config-template";
+          description = "Human-readable description of the active private config source.";
+        };
+
+        isPlaceholder = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Whether the active private config is still a placeholder template.";
+        };
+      };
+
       nix = {
         trustedBuilderPublicKeys = lib.mkOption {
           type = lib.types.listOf lib.types.str;
@@ -67,7 +81,12 @@
         };
 
         nodeRole = lib.mkOption {
-          type = lib.types.nullOr (lib.types.enum [ "server" "agent" ]);
+          type = lib.types.nullOr (
+            lib.types.enum [
+              "server"
+              "agent"
+            ]
+          );
           default = null;
           description = "Whether this node acts as a k3s server or agent.";
         };

@@ -51,6 +51,35 @@ The deploy helper in this repo now supports both:
 
 See `docs/NEXT_SESSION_ROLLOUT_NOTES_2026-03-17.md` for the operator runbook.
 
+## Private Config Workflow
+
+Private cluster values are now expected from a sibling flake:
+
+- `../nix-cluster-private`
+
+The tracked placeholder contract lives in:
+
+- `private-config-template/`
+
+The repo has an explicit preflight check for the private input:
+
+- `nix run "path:$PWD#validate-private-config" -- cluster-pi-01`
+
+Use that helper before deploys and validations.
+
+By default the helper scripts look for `../nix-cluster-private`.
+If your private flake lives elsewhere, set:
+
+- `NIX_CLUSTER_PRIVATE_FLAKE=/absolute/path/to/nix-cluster-private`
+
+Important: validate and deploy node configs with path-based flake refs so the
+local flake path and private override are included in evaluation:
+
+- `path:$PWD#nixosConfigurations.<node>`
+
+Do not rely on plain `.#nixosConfigurations.<node>` when checking private
+config presence.
+
 ## Start Here
 
 - `HOMELAB_AND_CLUSTER_CONTEXT.md`
@@ -61,10 +90,12 @@ See `docs/NEXT_SESSION_ROLLOUT_NOTES_2026-03-17.md` for the operator runbook.
 ## Repository Layout
 
 - `flake.nix`: Nix flake entrypoint
+- `private-config-template/`: tracked placeholder private flake contract
 - `nixos/modules/`: shared NixOS modules
 - `nixos/profiles/`: reusable profiles
 - `nixos/hosts/`: public node definitions
-- `nixos/hosts/private/`: gitignored environment-specific overrides
+- `nixos/hosts/private/`: legacy local override examples kept as migration
+  reference
 - `kubernetes/`: in-cluster definitions, split into shared platform services,
   operator tooling, and future applications, using Kustomize as the top-level
   layout and Helm selectively for upstream apps

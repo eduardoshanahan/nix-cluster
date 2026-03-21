@@ -1,0 +1,18 @@
+{ ... }:
+{
+  homelab.privateConfig.source = "private-config-template";
+  homelab.privateConfig.isPlaceholder = true;
+
+  homelab.adminAuthorizedKeys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKPTPTo3zsFau16LtaD5OlqM0HZPT7vU28ZNcqjecX6g meganix"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICRQTsGP+xPVsOPo5bSPLToF7XsaK4ZCrGeBN+WWF2+2 thinkpad contact@eduardoshanahan.com"
+  ];
+
+  homelab.domain = "<homelab-domain>";
+  homelab.cluster.apiServerEndpoint = "https://cluster-api.<homelab-domain>:6443";
+  homelab.nix.trustedBuilderPublicKeys = [
+    "rpi-box-01:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  ];
+
+  homelab.cluster.clusterToken = "replace-with-a-private-bootstrap-token";
+}
