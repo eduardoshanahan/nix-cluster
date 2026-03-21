@@ -136,6 +136,11 @@ Current shape:
 The migration for `nix-cluster` is complete enough to serve as the reference
 implementation for the other infrastructure repos.
 
+Companion planning docs:
+
+- `docs/HOMELAB_PRIVATE_COMPANION_REPO_INVENTORY_AND_MIGRATION_PLAN.md`
+- `docs/HOMELAB_OPERATOR_BOOTSTRAP_RUNBOOK.md`
+
 ## How To Bootstrap A New Operator Machine
 
 For each public/private repo pair:
