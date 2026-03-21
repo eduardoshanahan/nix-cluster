@@ -1,9 +1,8 @@
 prometheusScrape: true
 
 service:
-  type: NodePort
+  type: ClusterIP
   port: 8080
-  nodePort: 30080
 
 prometheus:
   monitor:
