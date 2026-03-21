@@ -201,5 +201,7 @@ The best next-session starting point is:
 
 1. read this handoff
 2. read `docs/PRIVATE_COMPANION_REPO_CONVENTION.md`
-3. inspect `nix-pi` and `nix-services` private-data assumptions
-4. write the shared migration/bootstrap docs before changing more code
+3. read `docs/HOMELAB_PRIVATE_COMPANION_REPO_INVENTORY_AND_MIGRATION_PLAN.md`
+4. read `docs/HOMELAB_OPERATOR_BOOTSTRAP_RUNBOOK.md`
+5. inspect `nix-pi` and `nix-services` private-data assumptions
+6. write the next repo migration against that shared convention
