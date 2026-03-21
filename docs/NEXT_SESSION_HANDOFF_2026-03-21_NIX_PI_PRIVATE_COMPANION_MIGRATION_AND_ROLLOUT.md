@@ -4,8 +4,9 @@
 
 This document is the restart point for the session that migrated `nix-pi` from
 tracked in-repo private host files to a real sibling private companion repo,
-rolled that migration out to the Raspberry Pi hosts, and uncovered one
-remaining follow-up item on `rpi-box-02`.
+rolled that migration out to `rpi-box-01` and `rpi-box-02`, prepared the
+remote-builder path for `rpi-box-03`, and uncovered one remaining follow-up
+item on `rpi-box-02`.
 
 The next session should use this file to avoid re-investigating:
 
@@ -25,12 +26,11 @@ At the end of this session:
   `../nix-pi-private`
 - the old tracked private files under `nix-pi/nixos/hosts/private/*.nix`
   were removed from the public repo
-- all three hosts were rebuilt successfully against the new public/private split:
+- two hosts were rebuilt successfully against the new public/private split:
   - `rpi-box-01`
   - `rpi-box-02`
-  - `rpi-box-03`
-- `rpi-box-03` was rebuilt using `rpi-box-02` as the remote builder, as
-  required
+- `rpi-box-03` configuration and remote-builder wiring were prepared for a
+  later rebuild using `rpi-box-02` as the remote builder, as required
 - a missing declarative Tailscale import on `rpi-box-02` was found and restored
 
 The one unresolved operational detail is:
@@ -39,9 +39,11 @@ The one unresolved operational detail is:
   and `tailscale.service` was started, but the final SSH-based post-start
   verification commands to that host began timing out
 
-That means the migration and rollout are mostly done, but the next session
-should start by confirming final live health on `rpi-box-02`, especially
-Tailscale.
+That means the migration is mostly done, but the next session should start by:
+
+- confirming final live health on `rpi-box-02`, especially Tailscale
+- validating the `rpi-box-03` deployment assets again before the first live
+  rollout to that host
 
 ## What Was Changed
 
@@ -175,7 +177,7 @@ Key updated files:
 
 ### Public/private evaluation checks
 
-These all passed during the session:
+These all passed during the migration session:
 
 - `validate-private-config` for:
   - `rpi-box-01`
@@ -203,6 +205,18 @@ These succeeded:
 - `rpi-box-03` toplevel derivation evaluation
 
 That confirmed the new private repo wiring worked before the first live deploy.
+
+Follow-up validation on 2026-03-21 also re-confirmed `rpi-box-03` with:
+
+- `validate-private-config`
+- `validate-pi-host`
+
+That follow-up caught and fixed one deployment-asset bug first:
+
+- `nix-pi-private/modules/rpi-box-03.nix` used `pkgs.systemd`
+- but the module argument list did not include `pkgs`
+
+After adding `pkgs` to the module arguments, both validations passed again.
 
 ## Live Deployments Completed
 
@@ -269,21 +283,23 @@ That omission was then fixed in the private repo.
 
 ### 3. `rpi-box-03`
 
-Deployed successfully with:
+Live deployment is still pending.
 
-- target host: `eduardo@rpi-box-03`
-- build host: `eduardo@rpi-box-02`
+What was confirmed instead:
 
-This remote-builder constraint was preserved exactly as intended.
+- target host remains intended as: `eduardo@rpi-box-03`
+- build host remains intended as: `eduardo@rpi-box-02`
+- this remote-builder constraint was preserved exactly as intended
+- local validation now succeeds for the current public/private config pair
 
-Verified live after deploy:
+Important follow-up note from 2026-03-21:
 
-- hostname correct
-- `traefik` active
-- `pihole` active
-- `loki` active
-- `promtail` active
-- homelab CA file present
+- the deployment assets were not yet solid enough on first inspection because
+  `nix-pi-private/modules/rpi-box-03.nix` referenced `pkgs.systemd` without
+  accepting `pkgs`
+- that evaluation bug is now fixed locally
+- do not describe `rpi-box-03` as already rolled out until the first real
+  remote-builder deploy and live checks are complete
 
 ## The `rpi-box-02` Tailscale Follow-Up
 
@@ -452,12 +468,15 @@ Then do this exact next work:
 
 1. Re-check live access to `rpi-box-02`.
 2. Confirm the final live state of `tailscale` on `rpi-box-02`.
-3. If Tailscale is healthy, commit:
+3. Re-run `rpi-box-03` validation and keep the remote-builder procedure ready.
+4. If `rpi-box-02` is healthy and `rpi-box-03` validation stays clean, commit:
    - `nix-pi`
    - `nix-pi-private`
-4. If Tailscale is not healthy, fix only that issue first and redeploy only
+5. If Tailscale is not healthy, fix only that issue first and redeploy only
    `rpi-box-02`.
-5. Once `nix-pi` is finished and committed, begin the same companion-repo
+6. Only after the first real `rpi-box-03` deploy and live verification should
+   the rollout be described as complete.
+7. Once `nix-pi` is finished and committed, begin the same companion-repo
    migration for `nix-services`.
 
 ## Recommended Success Criteria For The Next Session
@@ -465,10 +484,14 @@ Then do this exact next work:
 The next session should count as successful if it achieves:
 
 1. final confirmed live health on `rpi-box-02`, including Tailscale
-2. clean committed state in:
+2. a validated and accurate `rpi-box-03` deployment procedure using
+   `rpi-box-02` as builder
+3. first live `rpi-box-03` rollout completed and verified, if that rollout is
+   attempted in the session
+4. clean committed state in:
    - `nix-pi`
    - `nix-pi-private`
-3. a clear start on the `nix-services` companion-repo migration using the same
+5. a clear start on the `nix-services` companion-repo migration using the same
    explicit public/private pattern
 
 ## Key Lesson To Preserve
