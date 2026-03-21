@@ -103,7 +103,8 @@ Use this mental model when editing:
   flag generation
 - `nixos/profiles/`: reusable role/base profiles
 - `nixos/hosts/`: thin host-specific modules
-- `nixos/hosts/private/`: local-only overrides and sensitive values
+- `private-config-template/`: tracked placeholder private flake contract
+- `nixos/hosts/private/`: legacy examples from the pre-companion-repo model
 - `kubernetes/platform/observability/`: cluster telemetry workloads
 - `kubernetes/operations/`: cluster operational tooling
 - `kubernetes/apps/`: application workloads that run on top of the platform
@@ -114,6 +115,7 @@ Try to keep host files thin and shared behavior centralized.
 
 Prefer the repo helpers in `flake.nix` over ad hoc commands when they fit:
 
+- `nix run "path:$PWD#validate-private-config" -- <node>`
 - `nix run .#validate-cluster-node -- <node>`
 - `nix run .#deploy-cluster-node -- <node> <target-host>`
 - `nix run .#render-observability`
@@ -162,7 +164,17 @@ If you change `k3s` flag logic, validation assertions in
 
 ## Private Config And Secrets
 
-Treat `nixos/hosts/private/` as sensitive and local-only.
+Treat the private companion repo as the canonical private source of truth.
+
+For `nix-cluster`, the intended local default is:
+
+- `../nix-cluster-private`
+
+`private-config-template/` is only a tracked placeholder contract and must not
+be treated as a real private source.
+
+`nixos/hosts/private/` is now legacy migration scaffolding and example shape,
+not the preferred active workflow.
 
 Expected private data includes:
 
@@ -173,7 +185,8 @@ Expected private data includes:
 - any future secret-adjacent overrides
 
 Do not commit real secret values into tracked files.
-Use the example files as the documented shape when updating instructions.
+Use the private companion repo for real values and the tracked template/example
+files only as documented shape.
 
 ## Kubernetes Packaging Rules
 
