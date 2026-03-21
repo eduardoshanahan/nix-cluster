@@ -67,8 +67,10 @@ rpi-box-01:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
 This was proven by rebuilding `cluster-pi-02` with:
 
 ```bash
+export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/operator_ed25519}"
+
 NIX_CLUSTER_BUILD_HOST='operator@192.0.2.58' \
-NIX_CLUSTER_SSHOPTS='-i /home/eduardo/.ssh/thinkpad_ed25519 -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5' \
+NIX_CLUSTER_SSHOPTS="-i $NIX_CLUSTER_IDENTITY_FILE -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5" \
   nix run .#deploy-cluster-node -- cluster-pi-02 operator@192.0.2.32
 ```
 
@@ -167,10 +169,18 @@ For worker recovery, that file matters alongside `/var/lib/rancher/k3s`.
 
 ### Preferred SSH style
 
+Operators may run these commands from different workstations.
+
+Before using any SSH or deploy command, set the identity file to a private key
+that exists on the current machine and whose public key is already present in
+the cluster admin authorized-keys set.
+
 For this environment, use:
 
 ```bash
-ssh -i ~/.ssh/thinkpad_ed25519 \
+export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/operator_ed25519}"
+
+ssh -i "$NIX_CLUSTER_IDENTITY_FILE" \
   -F /dev/null \
   -o IdentitiesOnly=yes \
   -o StrictHostKeyChecking=accept-new \
@@ -183,8 +193,10 @@ ssh -i ~/.ssh/thinkpad_ed25519 \
 For nodes that already trust `rpi-box-01`:
 
 ```bash
+export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/operator_ed25519}"
+
 NIX_CLUSTER_BUILD_HOST='operator@192.0.2.58' \
-NIX_CLUSTER_SSHOPTS='-i /home/eduardo/.ssh/thinkpad_ed25519 -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5' \
+NIX_CLUSTER_SSHOPTS="-i $NIX_CLUSTER_IDENTITY_FILE -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5" \
   nix run .#deploy-cluster-node -- cluster-pi-0N operator@192.0.2.3N
 ```
 
@@ -193,7 +205,9 @@ NIX_CLUSTER_SSHOPTS='-i /home/eduardo/.ssh/thinkpad_ed25519 -F /dev/null -o Iden
 For a node that does not yet trust the builder:
 
 ```bash
-NIX_CLUSTER_SSHOPTS='-i /home/eduardo/.ssh/thinkpad_ed25519 -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5' \
+export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/operator_ed25519}"
+
+NIX_CLUSTER_SSHOPTS="-i $NIX_CLUSTER_IDENTITY_FILE -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5" \
   nix run .#deploy-cluster-node -- --self-build cluster-pi-0N operator@192.0.2.3N
 ```
 

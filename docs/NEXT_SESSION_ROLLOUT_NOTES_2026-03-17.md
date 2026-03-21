@@ -8,12 +8,18 @@ and using `rpi-box-01` (`192.0.2.58`) as the shared ARM builder.
 If starting fresh tomorrow, re-check only these facts first:
 
 ```bash
-ssh -F /dev/null -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5 operator@192.0.2.31 'hostname; systemctl is-active k3s; sudo k3s kubectl get nodes -o wide'
-ssh -F /dev/null -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5 operator@192.0.2.32 'hostname; systemctl is-active k3s'
-ssh -F /dev/null -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5 operator@192.0.2.33 'hostname; systemctl is-active k3s'
-ssh -F /dev/null -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5 operator@192.0.2.34 'hostname; systemctl is-active k3s'
-ssh -F /dev/null -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5 operator@192.0.2.35 'hostname; systemctl is-active k3s'
+export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/operator_ed25519}"
+
+ssh -i "$NIX_CLUSTER_IDENTITY_FILE" -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5 operator@192.0.2.31 'hostname; systemctl is-active k3s; sudo k3s kubectl get nodes -o wide'
+ssh -i "$NIX_CLUSTER_IDENTITY_FILE" -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5 operator@192.0.2.32 'hostname; systemctl is-active k3s'
+ssh -i "$NIX_CLUSTER_IDENTITY_FILE" -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5 operator@192.0.2.33 'hostname; systemctl is-active k3s'
+ssh -i "$NIX_CLUSTER_IDENTITY_FILE" -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5 operator@192.0.2.34 'hostname; systemctl is-active k3s'
+ssh -i "$NIX_CLUSTER_IDENTITY_FILE" -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5 operator@192.0.2.35 'hostname; systemctl is-active k3s'
 ```
+
+`NIX_CLUSTER_IDENTITY_FILE` must point to a private key that exists on the
+current operator machine and whose public key is present in the cluster admin
+authorized-keys set.
 
 Expected healthy end-state after the March 18 session:
 
@@ -60,13 +66,19 @@ Shared assumptions:
 Preferred deploy helper usage:
 
 ```bash
+export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/operator_ed25519}"
+
 NIX_CLUSTER_BUILD_HOST='operator@192.0.2.58' \
+NIX_CLUSTER_SSHOPTS="-i $NIX_CLUSTER_IDENTITY_FILE -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5" \
   nix run .#deploy-cluster-node -- cluster-pi-0N operator@192.0.2.3N
 ```
 
 Equivalent explicit invocation:
 
 ```bash
+export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/operator_ed25519}"
+
+NIX_CLUSTER_SSHOPTS="-i $NIX_CLUSTER_IDENTITY_FILE -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5" \
 nix run .#deploy-cluster-node -- \
   --build-host operator@192.0.2.58 \
   cluster-pi-0N \
@@ -85,7 +97,9 @@ This helper now:
 Before relying on the cross-host path, verify these facts on `rpi-box-01`:
 
 ```bash
-ssh -F /dev/null -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5 \
+export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/operator_ed25519}"
+
+ssh -i "$NIX_CLUSTER_IDENTITY_FILE" -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5 \
   operator@192.0.2.58 \
   'sudo nix config show | rg "require-sigs|secret-key-files|trusted-public-keys"'
 ```
@@ -120,7 +134,9 @@ But expect:
 Then verify:
 
 ```bash
-ssh -F /dev/null -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5 operator@192.0.2.3N 'hostname; cat /etc/hostname; systemctl is-active k3s'
+export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/operator_ed25519}"
+
+ssh -i "$NIX_CLUSTER_IDENTITY_FILE" -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5 operator@192.0.2.3N 'hostname; cat /etc/hostname; systemctl is-active k3s'
 ```
 
 If hostname mismatch or stale cluster behavior appears:
