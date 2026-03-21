@@ -147,20 +147,27 @@ Migration status:
 
 Status:
 
-- lower-priority inventory target
+- audited after `nix-services`
 
-Reason:
+Current result:
 
-- it is part of the broader homelab
-- it likely contains private operational data and deploy-time assumptions
-- but the current migration handoff identified `nix-pi` and `nix-services` as
-  the immediate next targets
+- a sibling private companion repo is **not currently required**
+- the repo already uses an explicit encrypted-env deployment model built around:
+  - `.env.example`
+  - optional tracked `.env.sops`
+  - preserved remote NAS-side `.env`
+- deploy scripts already handle the private-state flow directly
 
-Recommendation:
+Reference audit:
 
-- inspect it after `nix-pi` and `nix-services`
-- apply the same public-repo/private-companion rule if it still depends on
-  gitignored local-only state
+- `../synology-services/PRIVATE_STATE_AUDIT_2026-03-21.md`
+
+What this means operationally:
+
+- do not create `synology-services-private` just for symmetry
+- keep the current encrypted-env and remote `.env` deploy model
+- revisit only if the repo later gains a real non-`.env` private contract that
+  benefits from separate private versioning
 
 ## Migration Ranking
 
@@ -185,9 +192,9 @@ Why `nix-services` was audited second:
 
 Why `synology-services` comes third:
 
-- it has not yet been audited in the same detail
-- it is now the most likely remaining repo that may still benefit from an
-  explicit companion-pattern review
+- it was the remaining repo most likely to need an explicit private-state audit
+- the audit confirmed it already has a different explicit model and does not
+  need a sibling private repo today
 
 ## Shared Rules For All Future Migrations
 
