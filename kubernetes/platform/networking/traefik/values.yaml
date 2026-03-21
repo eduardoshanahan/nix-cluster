@@ -1,3 +1,5 @@
+fullnameOverride: traefik
+
 deployment:
   kind: Deployment
   replicas: 2
@@ -14,12 +16,15 @@ metrics:
   prometheus: null
 
 providers:
-  kubernetesIngress:
-    enabled: true
-    ingressClass: traefik
   kubernetesCRD:
     enabled: true
     ingressClass: traefik
+  kubernetesIngress:
+    enabled: true
+    ingressClass: traefik
+    publishedService:
+      enabled: true
+      pathOverride: traefik/traefik
 
 ingressClass:
   enabled: true
@@ -29,6 +34,13 @@ ingressClass:
 api:
   dashboard: false
   insecure: false
+
+additionalArguments:
+  - --entryPoints.web.http.redirections.entryPoint.to=:443
+  - --entryPoints.web.http.redirections.entryPoint.scheme=https
+  - --entryPoints.web.http.redirections.entryPoint.permanent=true
+  - --entryPoints.websecure.http.tls=true
+  - --log.level=INFO
 
 securityContext:
   allowPrivilegeEscalation: false
