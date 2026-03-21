@@ -18,12 +18,24 @@ in
       message = "Set homelab.cluster.nodeRole when homelab.cluster.enable is true.";
     }
     {
+      assertion = !config.homelab.privateConfig.isPlaceholder;
+      message = ''
+        The active private config is still the public placeholder template.
+        Create a sibling nix-cluster-private flake and point validation/deploy
+        commands at it with NIX_CLUSTER_PRIVATE_FLAKE if needed.
+      '';
+    }
+    {
       assertion = config.homelab.adminAuthorizedKeys != [ ];
-      message = "Set homelab.adminAuthorizedKeys in private overrides before building node images.";
+      message = "Set homelab.adminAuthorizedKeys in the private flake before building node images.";
     }
     {
       assertion = (!clusterEnabled) || config.homelab.cluster.clusterToken != null;
-      message = "Set homelab.cluster.clusterToken in private overrides before deploying the cluster.";
+      message = "Set homelab.cluster.clusterToken in the private flake before deploying the cluster.";
+    }
+    {
+      assertion = config.homelab.nix.trustedBuilderPublicKeys != [ ];
+      message = "Set homelab.nix.trustedBuilderPublicKeys in the private flake before cross-host deploys.";
     }
     {
       assertion = (!(clusterEnabled && isServer)) || hasWriteKubeconfigMode;

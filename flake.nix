@@ -5,11 +5,21 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     nixos-hardware.url = "github:NixOS/nixos-hardware";
+    private.url = "path:./private-config-template";
   };
 
-  outputs = inputs@{ self, nixpkgs, flake-utils, nixos-hardware, ... }:
+  outputs =
+    inputs@{
+      self,
+      nixpkgs,
+      flake-utils,
+      nixos-hardware,
+      private,
+      ...
+    }:
     let
       lib = nixpkgs.lib;
+      privateModuleOrNull = name: lib.attrByPath [ "nixosModules" name ] null private;
 
       mkClusterModules =
         {
@@ -37,8 +47,7 @@
         ++ lib.optionals (privateHostModule != null) [ privateHostModule ];
 
       mkClusterSystemFor =
-        system:
-        args:
+        system: args:
         lib.nixosSystem {
           inherit system;
           specialArgs = {
@@ -49,18 +58,9 @@
 
       mkClusterSystem = mkClusterSystemFor "aarch64-linux";
 
-      maybePrivateHost =
-        name:
-        let
-          p = ./. + "/nixos/hosts/private/${name}.nix";
-        in
-        if builtins.pathExists p then p else null;
+      maybePrivateHost = name: privateModuleOrNull name;
 
-      privateSharedOverrides =
-        let
-          p = ./. + "/nixos/hosts/private/overrides.nix";
-        in
-        if builtins.pathExists p then p else null;
+      privateSharedOverrides = privateModuleOrNull "default";
     in
     {
       nixosConfigurations = {
@@ -120,8 +120,109 @@
       system:
       let
         pkgs = import nixpkgs { inherit system; };
-        bootstrapImage = (
-          mkClusterSystemFor system {
+        validatePrivateConfig = pkgs.writeShellApplication {
+          name = "validate-private-config";
+          runtimeInputs = [
+            pkgs.jq
+            pkgs.nix
+          ];
+          text = ''
+            set -euo pipefail
+
+            quiet=0
+
+            usage() {
+              cat >&2 <<'EOF'
+            usage: validate-private-config [--quiet] [nixosConfiguration]
+
+              --quiet  Only print failures.
+
+            Validates that a real private flake exists and that path-based
+            evaluation resolves the required private values.
+            EOF
+              exit 1
+            }
+
+            while [ "$#" -gt 0 ]; do
+              case "$1" in
+                --quiet)
+                  quiet=1
+                  shift
+                  ;;
+                --help|-h)
+                  usage
+                  ;;
+                --*)
+                  echo "unknown option: $1" >&2
+                  usage
+                  ;;
+                *)
+                  break
+                  ;;
+              esac
+            done
+
+            if [ "$#" -gt 1 ]; then
+              usage
+            fi
+
+            node="''${1:-cluster-pi-01}"
+            flake_ref="path:$PWD#nixosConfigurations.$node"
+            private_flake_dir="''${NIX_CLUSTER_PRIVATE_FLAKE:-$PWD/../nix-cluster-private}"
+
+            if [ ! -f "$private_flake_dir/flake.nix" ]; then
+              cat >&2 <<EOF
+            missing private flake: $private_flake_dir/flake.nix
+
+            Create a sibling nix-cluster-private flake there, or point
+            NIX_CLUSTER_PRIVATE_FLAKE at the real private flake location.
+
+            The tracked template lives at:
+              $PWD/private-config-template
+            EOF
+              exit 1
+            fi
+
+            private_override_args=(--no-write-lock-file --override-input private "path:$private_flake_dir")
+            private_source="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.privateConfig.source" --raw)"
+            private_placeholder="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.privateConfig.isPlaceholder" --json)"
+
+            if [ "$private_placeholder" = "true" ]; then
+              echo "private config check failed: private flake source '$private_source' is still the placeholder template" >&2
+              exit 1
+            fi
+
+            cluster_token_json="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.cluster.clusterToken" --json)"
+            admin_keys_json="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.adminAuthorizedKeys" --json)"
+            builder_keys_json="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.nix.trustedBuilderPublicKeys" --json)"
+            domain="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.domain" --raw)"
+
+            if [ "$cluster_token_json" = "null" ]; then
+              echo "private config check failed: homelab.cluster.clusterToken is null for $node" >&2
+              exit 1
+            fi
+
+            if ! printf '%s' "$admin_keys_json" | jq -e 'length > 0' >/dev/null; then
+              echo "private config check failed: homelab.adminAuthorizedKeys is empty for $node" >&2
+              exit 1
+            fi
+
+            if ! printf '%s' "$builder_keys_json" | jq -e 'length > 0' >/dev/null; then
+              echo "private config check failed: homelab.nix.trustedBuilderPublicKeys is empty for $node" >&2
+              exit 1
+            fi
+
+            if [ "$quiet" -eq 0 ]; then
+              echo "private config OK for $node"
+              echo "private_source=$private_source"
+              echo "domain=$domain"
+              echo "admin_keys=$(printf '%s' "$admin_keys_json" | jq 'length')"
+              echo "trusted_builder_keys=$(printf '%s' "$builder_keys_json" | jq 'length')"
+            fi
+          '';
+        };
+        bootstrapImage =
+          (mkClusterSystemFor system {
             hostName = "cluster-bootstrap";
             role = "agent";
             privateSharedModule = privateSharedOverrides;
@@ -130,10 +231,10 @@
                 homelab.cluster.enable = false;
               }
             ];
-          }
-        ).config.system.build.sdImage;
+          }).config.system.build.sdImage;
         validateCluster = pkgs.writeShellApplication {
           name = "validate-cluster-node";
+          runtimeInputs = [ validatePrivateConfig ];
           text = ''
             set -euo pipefail
 
@@ -143,10 +244,13 @@
             fi
 
             node="$1"
+            validate-private-config --quiet "$node"
+            private_flake_dir="''${NIX_CLUSTER_PRIVATE_FLAKE:-$PWD/../nix-cluster-private}"
+            private_override_args=(--no-write-lock-file --override-input private "path:$private_flake_dir")
             flake_ref="path:$PWD#nixosConfigurations.$node"
-            flags_json="$(nix eval "$flake_ref.config.services.k3s.extraFlags" --json)"
-            exec_start="$(nix eval "$flake_ref.config.systemd.services.k3s.serviceConfig.ExecStart" --raw)"
-            role="$(nix eval "$flake_ref.config.homelab.cluster.nodeRole" --raw)"
+            flags_json="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.services.k3s.extraFlags" --json)"
+            exec_start="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.systemd.services.k3s.serviceConfig.ExecStart" --raw)"
+            role="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.cluster.nodeRole" --raw)"
 
             echo "role=$role"
             echo "flags=$flags_json"
@@ -175,7 +279,10 @@
         };
         deployNode = pkgs.writeShellApplication {
           name = "deploy-cluster-node";
-          runtimeInputs = [ pkgs.nixos-rebuild ];
+          runtimeInputs = [
+            pkgs.nixos-rebuild
+            validatePrivateConfig
+          ];
           text = ''
             set -euo pipefail
 
@@ -228,6 +335,9 @@
             node="$1"
             target="$2"
 
+            validate-private-config --quiet "$node"
+            private_flake_dir="''${NIX_CLUSTER_PRIVATE_FLAKE:-$PWD/../nix-cluster-private}"
+
             if [ "$self_build" -eq 1 ]; then
               build_host="$target"
             fi
@@ -237,7 +347,9 @@
             rebuild_cmd=(
               /run/current-system/sw/bin/nixos-rebuild
               switch
+              --no-write-lock-file
               --flake "path:$PWD#$node"
+              --override-input private "path:$private_flake_dir"
               --target-host "$target"
               --sudo
             )
@@ -288,12 +400,18 @@
       in
       {
         packages.bootstrap-sd-image = bootstrapImage;
+        packages.validate-private-config = validatePrivateConfig;
         packages.validate-cluster-node = validateCluster;
         packages.deploy-cluster-node = deployNode;
         packages.render-platform = renderPlatform;
         packages.render-observability = renderObservability;
         packages.render-platform = renderPlatform;
         packages.render-headlamp = renderHeadlamp;
+
+        apps.validate-private-config = {
+          type = "app";
+          program = "${validatePrivateConfig}/bin/validate-private-config";
+        };
 
         apps.validate-cluster-node = {
           type = "app";
