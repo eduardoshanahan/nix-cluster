@@ -2,13 +2,13 @@
 
 ## Purpose
 
-This handoff is for the next session whose goal is to spread the
+This handoff began as the restart point for spreading the
 private-companion-repo pattern beyond `nix-cluster`.
 
 The `nix-cluster` migration was completed in this session and should now be
 treated as the working reference implementation.
 
-The next session should focus on:
+The original next-session focus was:
 
 - documenting the cross-repo convention clearly
 - inventorying other repos that still depend on gitignored private directories
@@ -68,97 +68,27 @@ Final live verification at the end of the session:
 
 - `2088bee` `Switch nix-cluster to explicit private flake input`
 
-## The Broader Problem Still Remaining
+## Consolidated Outcome
 
-The homelab still has multiple places where private values live as:
+This work has now progressed far beyond the original planning stage.
 
-- gitignored directories
-- local-only files
-- machine-specific untracked state
+As of 2026-03-21, the homelab-wide audit conclusion is:
 
-That means `nix-cluster` is fixed, but the overall homelab private-config story
-is not yet standardized.
-
-The next session should solve that at the design and documentation level before
-starting more ad hoc migrations.
-
-## Recommended Next Session Goal
-
-Define and document the homelab-wide private companion repo convention, then use
-it to plan migrations for:
-
+- `nix-cluster`
+  - explicit companion repo required
 - `nix-pi`
+  - explicit companion repo required
 - `nix-services`
-- any other repo in `hhlab-insfrastructure` that still depends on private
-  local-only directories
+  - no evaluation-time companion repo currently required
+- `synology-services`
+  - no sibling companion repo currently required
 
-## Recommended Work Plan
+The correct higher-level rule is now:
 
-### Phase 1. Inventory current private directories across the homelab
-
-Start by listing where private state currently lives.
-
-Likely targets:
-
-- `nix-pi`
-- `nix-services`
-- possibly parts of `synology-services`
-
-Goal:
-
-- identify which private files are required for evaluation
-- identify which are required only for deployment or runtime
-- identify which values are duplicated across repos
-
-### Phase 2. Decide whether any values should become shared
-
-There are two possible shapes:
-
-- per-repo private companion repos only
-- a hybrid model with a future shared `homelab-private` repo
-
-Recommendation:
-
-- do not build a shared private repo first
-- first migrate each repo to the private-companion pattern independently
-- only centralize later if duplicated values become painful
-
-### Phase 3. Write one operator bootstrap runbook
-
-Create a single operator-facing doc that answers:
-
-- what repos must be cloned on a fresh machine
-- what exact directory layout is expected
-- how to validate private config before deploys
-- how to override default private paths if needed
-
-The recommended standardized layout is:
-
-```text
-~/Programming/gitea.<homelab-domain>/hhlab-insfrastructure/
-  nix-cluster/
-  nix-cluster-private/
-  nix-pi/
-  nix-pi-private/
-  nix-services/
-  nix-services-private/
-```
-
-### Phase 4. Plan the next actual migration target
-
-Best likely next candidate:
-
-- `nix-pi`
-
-Reason:
-
-- it is central to operator workflows
-- it already has known private host files
-- it influences monitoring and builder-related workflows
-
-After `nix-pi`, likely next:
-
-- `nix-services`
+- every repo must have an explicit private-state contract
+- companion repos are used where evaluation-time private values require them
+- other repos may use different explicit models if they are documented and
+  operationally sound
 
 ## Files To Read First Next Session
 
@@ -166,13 +96,8 @@ After `nix-pi`, likely next:
 - `AGENTS.md`
 - `docs/PRIVATE_COMPANION_REPO_CONVENTION.md`
 - `docs/NEXT_SESSION_HANDOFF_2026-03-21_CLUSTER_NETWORKING_AND_PRIVATE_CONFIG.md`
-
-Then inspect:
-
-- `../nix-pi`
-- `../nix-services`
-
-for their current private-config assumptions.
+- `docs/HOMELAB_PRIVATE_COMPANION_REPO_INVENTORY_AND_MIGRATION_PLAN.md`
+- `docs/HOMELAB_OPERATOR_BOOTSTRAP_RUNBOOK.md`
 
 ## Important Constraints For Next Session
 
@@ -182,20 +107,21 @@ for their current private-config assumptions.
 - keep the bootstrap story simple enough for a new operator machine
 - prefer explicit validation helpers over silent evaluation assumptions
 
-## Success Criteria For The Next Session
+## Consolidated Success Criteria Achieved
 
-The next session should count as successful if it produces:
+This body of work now achieved:
 
-1. a clear homelab-wide migration convention
+1. a clear homelab-wide private-state convention
 2. an inventory of current private-data locations across the sibling repos
-3. a ranked migration order
+3. a ranked migration order with completed audits
 4. a bootstrap runbook for new operator machines
-
-It does not need to finish migrating every repo in one session.
+5. finished `nix-pi` rollout through `rpi-box-03`
+6. explicit audit records for `nix-services` and `synology-services`
 
 ## Stop Point
 
-`nix-cluster` is in good shape and fully deployed.
+`nix-cluster` is in good shape and fully deployed, and the homelab-wide
+private-state audit sweep is complete for the currently active repos.
 
 The best next-session starting point is:
 
@@ -203,5 +129,6 @@ The best next-session starting point is:
 2. read `docs/PRIVATE_COMPANION_REPO_CONVENTION.md`
 3. read `docs/HOMELAB_PRIVATE_COMPANION_REPO_INVENTORY_AND_MIGRATION_PLAN.md`
 4. read `docs/HOMELAB_OPERATOR_BOOTSTRAP_RUNBOOK.md`
-5. inspect `nix-pi` and `nix-services` private-data assumptions
-6. write the next repo migration against that shared convention
+5. read the latest repo-specific audit or rollout record relevant to the task
+6. continue from the now-documented explicit private-state model rather than
+   re-opening the companion-repo question from scratch
