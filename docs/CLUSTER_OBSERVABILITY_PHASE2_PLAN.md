@@ -60,6 +60,35 @@ This means the next observability phase should not restart from "should we add
 It should start from "the first Kubernetes-aware metrics path exists; what is
 the next highest-value expansion beyond that foundation?".
 
+## Initial `k3s` Investigation Findings As Of 2026-03-21
+
+The first control-plane investigation for this phase already established some
+important constraints from the live cluster.
+
+Observed on `cluster-pi-01`:
+
+- scheduler metrics listener exists on `127.0.0.1:10259`
+- controller-manager metrics listener exists on `127.0.0.1:10257`
+- kubelet listens on `:10250`
+- Kubernetes API listens on `:6443`
+
+Observed response shape:
+
+- `https://127.0.0.1:10257/metrics` returns `403`
+- `https://127.0.0.1:10259/metrics` returns `403`
+- `https://127.0.0.1:10250/metrics` returns `401`
+- `https://127.0.0.1:6443/metrics` returns `401`
+
+Implications:
+
+- there is a real control-plane telemetry surface in `k3s`
+- it is not currently exposed in a way that the external Prometheus host on
+  `rpi-box-02` can scrape directly without extra design work
+- raw direct scraping from the monitoring host should not be treated as the
+  next easy step
+- the next implementation pass should focus on authenticated access design or
+  an in-cluster collection path, not on opening more host ports casually
+
 ## Why This Is A Separate Phase
 
 Phase 1 gives host-level observability with low complexity.
@@ -261,11 +290,18 @@ These should be answered at the start of the next observability session:
 1. Confirm the current Phase 1 and early Phase 2 foundation is still healthy.
 2. Treat `kube-state-metrics`, Prometheus scraping, and current dashboards as
    the established baseline.
-3. Investigate the exact `k3s`-compatible control-plane telemetry surface.
-4. Decide whether to add API-server, kubelet, or other cluster-runtime metrics.
-5. Extend dashboards only where the new signals materially improve operator
+3. Treat the initial `k3s` endpoint investigation in this document as the
+   starting constraint set, not as an unanswered question.
+4. Decide on one safe collection model for control-plane metrics before adding
+   more telemetry:
+   - authenticated in-cluster scraper
+   - controlled proxy path
+   - or explicit deferral if the complexity is not worth it yet
+5. Only after that decision, add API-server, kubelet, or other cluster-runtime
+   metrics.
+6. Extend dashboards only where the new signals materially improve operator
    understanding.
-6. Refine alert rules once the added signals prove useful and low-noise.
+7. Refine alert rules once the added signals prove useful and low-noise.
 
 ## Validation Gates
 
@@ -309,3 +345,5 @@ If starting a new session for this phase, the next work should be framed as:
    still healthy
 3. then investigate the next highest-value telemetry gap after
    `kube-state-metrics`, starting with realistic `k3s` control-plane signals
+4. do not assume those signals are directly scrapeable from `rpi-box-02`
+   without an authenticated design
