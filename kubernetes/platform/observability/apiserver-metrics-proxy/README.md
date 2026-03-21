@@ -11,8 +11,9 @@ Purpose:
 
 Current scope:
 
-- internal `ClusterIP` service only
-- no external ingress yet
+- internal `ClusterIP` service plus Traefik ingress exposure on the existing
+  `kube-state-metrics` host
+- external path: `https://kube-state-metrics.<lab-domain>/apiserver-metrics`
 - no sibling-repo Prometheus integration yet
 
 This keeps the first slice focused on proving the cluster-side auth and
