@@ -38,6 +38,28 @@ Explicitly out of scope for the first implementation pass:
 - full SRE-style SLO engineering
 - broad log analytics redesign
 
+## Current Baseline As Of 2026-03-21
+
+The original Phase 2 plan was written before the first Kubernetes-aware
+observability slice was implemented.
+
+That baseline has now changed.
+
+Already in place:
+
+- `kube-state-metrics` is deployed from `nix-cluster`
+- the metrics endpoint is exposed through Traefik ingress at
+  `https://kube-state-metrics.<homelab-domain>:443/metrics`
+- Prometheus on `rpi-box-02` scrapes that endpoint
+- Grafana content for Kubernetes overview now exists in `nix-services`
+- initial alert rules for Kubernetes state also exist in `nix-services`
+
+This means the next observability phase should not restart from "should we add
+`kube-state-metrics`?".
+
+It should start from "the first Kubernetes-aware metrics path exists; what is
+the next highest-value expansion beyond that foundation?".
+
 ## Why This Is A Separate Phase
 
 Phase 1 gives host-level observability with low complexity.
@@ -90,7 +112,8 @@ These are the most likely building blocks.
 
 ### A. `kube-state-metrics`
 
-This is the clearest first candidate for Kubernetes-aware state telemetry.
+This was the clearest first candidate for Kubernetes-aware state telemetry, and
+it is now the implemented foundation.
 
 Why:
 
@@ -149,13 +172,12 @@ For this repository, cluster workloads should be organized with:
 Phase 2 should establish that pattern under `kubernetes/platform/` rather than
 introducing a one-off deployment style.
 
-### Step 1. Start with `kube-state-metrics`
+### Step 1. Keep `kube-state-metrics` as the Phase 2 foundation
 
-This is the best first step for Kubernetes-aware visibility.
+This remains the right anchor for Kubernetes state visibility, but it should be
+treated as completed groundwork rather than future planning.
 
-It is likely to give the largest value-to-complexity ratio.
-
-### Step 2. Scrape it from the existing Prometheus host
+### Step 2. Keep scraping it from the existing Prometheus host
 
 The monitoring hub on `rpi-box-02` should remain the central observability
 point unless a future architectural change is made deliberately.
@@ -166,10 +188,12 @@ That means:
 - Prometheus on `rpi-box-02` scrapes them
 - Grafana on `rpi-box-02` renders them
 
-### Step 3. Add cluster-focused Grafana dashboards
+### Step 3. Expand beyond basic Kubernetes state visibility
 
-This phase likely needs new dashboard content, because the existing host-health
-dashboards are not enough for Kubernetes state.
+The first cluster-focused dashboard layer now exists.
+
+The next pass should focus on the gaps that remain after `kube-state-metrics`,
+initial dashboards, and first-pass alerts are already live.
 
 Good initial dashboard themes:
 
@@ -178,7 +202,7 @@ Good initial dashboard themes:
 - pod health and restart activity
 - workload status by namespace
 
-### Step 4. Add alert candidates only after signal quality is proven
+### Step 4. Add or refine alert candidates only after signal quality is proven
 
 Once dashboards are trustworthy, alerting can be considered for:
 
@@ -214,30 +238,34 @@ Owns:
 
 ## Open Design Questions
 
-These should be answered at the start of the Phase 2 session:
+These should be answered at the start of the next observability session:
 
-1. Where should `kube-state-metrics` be declared?
-   Most likely in `nix-cluster`, because it belongs to cluster telemetry.
+1. Is the current `kube-state-metrics` plus ingress path the long-term exposure
+   model we want to keep?
+   It is the current working implementation, but future tightening or a more
+   direct scrape model may still be worth evaluating.
 
-2. How should Prometheus on `rpi-box-02` reach cluster-native metrics?
-   This depends on whether those endpoints are exposed by service, ingress, or
-   some other controlled path.
+2. Which control-plane signals matter enough to add next?
+   The biggest remaining gap is no longer basic workload state. It is deeper
+   visibility into API-server, kubelet, and `k3s` control-plane health where
+   that is realistically available.
 
 3. How much `k3s` control-plane telemetry is realistically available and worth
    the complexity in this environment?
 
 4. Should cluster alerting be added in the same pass, or only after dashboards
-   are stable?
+   and current signals are validated in practice?
 
 ## Proposed Execution Order
 
-1. Finish and stabilize Phase 1.
-2. Establish the `kubernetes/` workload packaging pattern for future services.
-3. Investigate the exact `k3s`-compatible telemetry surface.
-4. Add `kube-state-metrics` or equivalent cluster-state exporter.
-5. Add Prometheus scrape targets on the monitoring host.
-6. Build Grafana dashboards for cluster-aware visibility.
-7. Evaluate alert rules once the metrics prove useful.
+1. Confirm the current Phase 1 and early Phase 2 foundation is still healthy.
+2. Treat `kube-state-metrics`, Prometheus scraping, and current dashboards as
+   the established baseline.
+3. Investigate the exact `k3s`-compatible control-plane telemetry surface.
+4. Decide whether to add API-server, kubelet, or other cluster-runtime metrics.
+5. Extend dashboards only where the new signals materially improve operator
+   understanding.
+6. Refine alert rules once the added signals prove useful and low-noise.
 
 ## Validation Gates
 
@@ -277,6 +305,7 @@ valuable than a large pile of partially understood panels.
 If starting a new session for this phase, the next work should be framed as:
 
 1. use this document as the planning baseline
-2. begin by validating the Phase 1 foundation is still healthy
-3. then investigate the lowest-complexity Kubernetes-native telemetry path,
-   starting with `kube-state-metrics`
+2. begin by validating the existing Phase 1 and early Phase 2 foundation is
+   still healthy
+3. then investigate the next highest-value telemetry gap after
+   `kube-state-metrics`, starting with realistic `k3s` control-plane signals

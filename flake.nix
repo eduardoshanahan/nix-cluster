@@ -405,7 +405,6 @@
         packages.deploy-cluster-node = deployNode;
         packages.render-platform = renderPlatform;
         packages.render-observability = renderObservability;
-        packages.render-platform = renderPlatform;
         packages.render-headlamp = renderHeadlamp;
 
         apps.validate-private-config = {
@@ -431,11 +430,6 @@
         apps.render-observability = {
           type = "app";
           program = "${renderObservability}/bin/render-observability";
-        };
-
-        apps.render-platform = {
-          type = "app";
-          program = "${renderPlatform}/bin/render-platform";
         };
 
         apps.render-headlamp = {
