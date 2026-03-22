@@ -200,6 +200,9 @@ Expected private data includes:
 Do not commit real secret values into tracked files.
 Use the private companion repo for real values and the tracked template/example
 files only as documented shape.
+Private continuity notes, real domains, real internal IPs, and operator-
+specific cluster workflow also belong in `../nix-cluster-private`, not in
+public docs or handoff files here.
 
 ## Kubernetes Packaging Rules
 
