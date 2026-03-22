@@ -51,6 +51,11 @@ Render the operator tooling separately with:
 nix run .#render-headlamp
 ```
 
+These render helpers resolve environment-specific ingress and MetalLB values
+from `../nix-cluster-private` by default. If your companion checkout lives
+elsewhere, set `NIX_CLUSTER_PRIVATE_FLAKE=/absolute/path/to/nix-cluster-private`
+before running them.
+
 Apply the platform stack with:
 
 ```bash

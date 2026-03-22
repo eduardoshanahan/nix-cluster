@@ -388,7 +388,7 @@ Important:
 
 The remote ARM builder at `192.0.2.58` was checked and did not have:
 
-- `~/Programming/gitea.<homelab-domain>/hhlab-insfrastructure/nix-cluster/nixos/hosts/private/overrides.nix`
+- `~/infra/nix-cluster/nixos/hosts/private/overrides.nix`
 
 So the workaround was not “build from the builder checkout”.
 The missing local private override had to be recreated first.

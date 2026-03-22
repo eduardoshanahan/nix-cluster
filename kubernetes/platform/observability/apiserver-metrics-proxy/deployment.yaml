@@ -11,7 +11,7 @@ spec:
   template:
     metadata:
       annotations:
-        homelab.<homelab-domain>/config-revision: "2"
+        __HOMELAB_NAMESPACE_LABEL_PREFIX__/config-revision: "2"
       labels:
         app.kubernetes.io/name: apiserver-metrics-proxy
     spec:

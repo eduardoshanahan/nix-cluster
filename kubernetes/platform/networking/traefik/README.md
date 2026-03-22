@@ -8,7 +8,7 @@ Current deployment shape:
 - packaging: Helm chart via Kustomize
 - scheduling model: `Deployment` with two replicas
 - exposure model: `LoadBalancer` service via MetalLB
-- stable ingress IP: `192.0.2.36`
+- stable ingress IP: from the private MetalLB address pool
 - ingress model: standard Kubernetes `Ingress` resources
 
 This keeps the cluster aligned with the rest of the homelab, where Traefik is

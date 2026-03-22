@@ -8,7 +8,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: kube-state-metrics.<homelab-domain>
+    - host: __KUBE_STATE_METRICS_HOST__
       http:
         paths:
           - path: /apiserver-metrics
@@ -20,5 +20,5 @@ spec:
                   number: 8080
   tls:
     - hosts:
-        - kube-state-metrics.<homelab-domain>
-      secretName: <private-ingress-tls-secret>
+        - __KUBE_STATE_METRICS_HOST__
+      secretName: __INGRESS_TLS_SECRET_NAME__
