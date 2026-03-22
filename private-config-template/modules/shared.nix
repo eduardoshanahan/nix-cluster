@@ -4,15 +4,16 @@
   homelab.privateConfig.isPlaceholder = true;
 
   homelab.adminAuthorizedKeys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKPTPTo3zsFau16LtaD5OlqM0HZPT7vU28ZNcqjecX6g meganix"
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICRQTsGP+xPVsOPo5bSPLToF7XsaK4ZCrGeBN+WWF2+2 thinkpad contact@eduardoshanahan.com"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEXAMPLEPUBLICKEY000000000000000000000 operator@example"
   ];
 
-  homelab.domain = "<homelab-domain>";
-  homelab.cluster.apiServerEndpoint = "https://cluster-api.<homelab-domain>:6443";
+  homelab.domain = "cluster.example.internal";
+  homelab.cluster.apiServerEndpoint = "https://cluster-api.cluster.example.internal:6443";
   homelab.nix.trustedBuilderPublicKeys = [
     "rpi-box-01:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
   ];
+  homelab.kubernetes.ingressTlsSecretName = "replace-with-private-tls-secret";
+  homelab.kubernetes.metallb.addressPool = "198.51.100.10-198.51.100.20";
 
   homelab.cluster.clusterToken = "replace-with-a-private-bootstrap-token";
 }

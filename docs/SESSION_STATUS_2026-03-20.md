@@ -73,11 +73,11 @@ Current Headlamp access direction:
 - HTTP now redirects to HTTPS at the Traefik entrypoint
 - Traefik is now intended to sit behind MetalLB on a stable LAN IP instead of
   being tied to a specific node IP
-- the current pinned Traefik `LoadBalancer` IP is `192.168.1.36`
+- the current pinned Traefik `LoadBalancer` IP is `192.0.2.36`
 
 ## Suggested Follow-Up Sequence
 
-1. Point Pi-hole ingress hostnames at `192.168.1.36`
+1. Point Pi-hole ingress hostnames at `192.0.2.36`
 2. Keep new cluster apps behind Traefik using standard Kubernetes `Ingress`
 3. Reuse the homelab wildcard TLS secret for additional `*.<homelab-domain>`
    ingresses where appropriate

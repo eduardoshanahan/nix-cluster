@@ -67,6 +67,22 @@
         };
       };
 
+      kubernetes = {
+        ingressTlsSecretName = lib.mkOption {
+          type = lib.types.str;
+          default = "replace-with-private-tls-secret";
+          description = "TLS secret name used by ingress resources rendered from this repo.";
+        };
+
+        metallb = {
+          addressPool = lib.mkOption {
+            type = lib.types.str;
+            default = "198.51.100.10-198.51.100.20";
+            description = "MetalLB address range for the shared LAN ingress IP pool.";
+          };
+        };
+      };
+
       cluster = {
         enable = lib.mkOption {
           type = lib.types.bool;

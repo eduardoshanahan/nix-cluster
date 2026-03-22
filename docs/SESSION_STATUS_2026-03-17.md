@@ -10,41 +10,41 @@ today's failures.
 
 Progress today was real:
 
-- `cluster-pi-01` is healthy at `192.168.1.31`
+- `cluster-pi-01` is healthy at `192.0.2.31`
 - `cluster-pi-02` was successfully converted from the flashed generic-image
-  state into a real second control-plane node at `192.168.1.32`
+  state into a real second control-plane node at `192.0.2.32`
 - `cluster-pi-01` and `cluster-pi-02` both show `Ready` in Kubernetes
 
 Important remaining state:
 
-- `192.168.1.33` still boots as `cluster-pi-01`, `k3s` active
-- `192.168.1.34` still boots as `cluster-pi-01`, `k3s` active
-- `192.168.1.35` still boots as `cluster-pi-01`, `k3s` activating
+- `192.0.2.33` still boots as `cluster-pi-01`, `k3s` active
+- `192.0.2.34` still boots as `cluster-pi-01`, `k3s` active
+- `192.0.2.35` still boots as `cluster-pi-01`, `k3s` activating
 
 ## Final Verified Cluster State
 
 Verified near the end of the session:
 
-- `192.168.1.31`:
+- `192.0.2.31`:
   - hostname: `cluster-pi-01`
   - `k3s`: `active`
-- `192.168.1.32`:
+- `192.0.2.32`:
   - hostname: `cluster-pi-02`
   - `k3s`: `active`
 
-Cluster view from `192.168.1.31`:
+Cluster view from `192.0.2.31`:
 
 ```text
 NAME            STATUS   ROLES                AGE   VERSION        INTERNAL-IP
-cluster-pi-01   Ready    control-plane,etcd   24h   v1.35.2+k3s1   192.168.1.31
-cluster-pi-02   Ready    control-plane,etcd   70s   v1.35.2+k3s1   192.168.1.32
+cluster-pi-01   Ready    control-plane,etcd   24h   v1.35.2+k3s1   192.0.2.31
+cluster-pi-02   Ready    control-plane,etcd   70s   v1.35.2+k3s1   192.0.2.32
 ```
 
 Untouched remaining nodes:
 
-- `192.168.1.33`: `cluster-pi-01`, `k3s` `active`
-- `192.168.1.34`: `cluster-pi-01`, `k3s` `active`
-- `192.168.1.35`: `cluster-pi-01`, `k3s` `activating`
+- `192.0.2.33`: `cluster-pi-01`, `k3s` `active`
+- `192.0.2.34`: `cluster-pi-01`, `k3s` `active`
+- `192.0.2.35`: `cluster-pi-01`, `k3s` `activating`
 
 ## What Worked
 
@@ -71,9 +71,9 @@ The successful deploy command for `cluster-pi-01` was:
 ```bash
 NIX_SSHOPTS='-F /dev/null -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5' \
   /run/current-system/sw/bin/nixos-rebuild switch \
-  --flake 'path:/home/eduardo/Programming/gitea.<homelab-domain>/nix-cluster#cluster-pi-01' \
-  --build-host eduardo@192.168.1.58 \
-  --target-host eduardo@192.168.1.31 \
+  --flake 'path:#cluster-pi-01' \
+  --build-host operator@192.0.2.58 \
+  --target-host operator@192.0.2.31 \
   --sudo
 ```
 
@@ -88,7 +88,7 @@ Key observation:
 
 What finally fixed it:
 
-1. deploy `cluster-pi-02` config onto `192.168.1.32`
+1. deploy `cluster-pi-02` config onto `192.0.2.32`
 2. reboot once so the runtime hostname became `cluster-pi-02`
 3. stop `k3s`
 4. delete stale `/var/lib/rancher/k3s`
@@ -130,24 +130,24 @@ That means:
 
 - `rpi-box-01` is **not** currently signing locally built outputs
 - targets will reject store paths copied from `rpi-box-01`
-- cross-host `--build-host eduardo@192.168.1.58` is not a complete permanent
+- cross-host `--build-host operator@192.0.2.58` is not a complete permanent
   solution yet
 
 We hit the exact failure on `cluster-pi-02`:
 
-- copied paths from `ssh://eduardo@192.168.1.58`
+- copied paths from `ssh://operator@192.0.2.58`
 - target rejected them because they lacked a trusted signature
 
 ### 4. Freshly flashed nodes still contain stale live `k3s` state
 
 This was the biggest behavioral discovery of the session.
 
-Symptoms observed on `192.168.1.32`:
+Symptoms observed on `192.0.2.32`:
 
 - after switching to `cluster-pi-02`, `/etc/hostname` was correct
 - but the running hostname initially stayed `cluster-pi-01`
 - after reboot, `k3s` still behaved like it had old server state
-- logs showed it opening tunnels to itself on `192.168.1.32:6443`
+- logs showed it opening tunnels to itself on `192.0.2.32:6443`
 - it was not appearing in `cluster-pi-01`'s node list
 
 What this means:
@@ -169,7 +169,7 @@ the cluster admin authorized-keys set.
 Use this consistently:
 
 ```bash
-export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/meganix_ed25519}"
+export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/operator_ed25519}"
 
 ssh -i "$NIX_CLUSTER_IDENTITY_FILE" -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5
 ```
@@ -186,12 +186,12 @@ Reason:
 Current effective ARM build host:
 
 - `rpi-box-01`
-- `192.168.1.58`
-- repo checkout exists at `/home/eduardo/nix-cluster`
+- `192.0.2.58`
+- repo checkout exists at `~/nix-cluster`
 
 ### Known-good control-plane verification
 
-From `192.168.1.31`:
+From `192.0.2.31`:
 
 ```bash
 sudo k3s kubectl get nodes -o wide
@@ -221,9 +221,9 @@ For each remaining node:
 
 Likely order:
 
-1. `cluster-pi-03` at `192.168.1.33`
-2. `cluster-pi-04` at `192.168.1.34`
-3. `cluster-pi-05` at `192.168.1.35`
+1. `cluster-pi-03` at `192.0.2.33`
+2. `cluster-pi-04` at `192.0.2.34`
+3. `cluster-pi-05` at `192.0.2.35`
 
 ### Repository changes that should happen next
 

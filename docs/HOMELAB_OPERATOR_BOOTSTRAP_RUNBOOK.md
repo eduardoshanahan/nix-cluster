@@ -13,7 +13,7 @@ operator machine does not depend on ad hoc local-only hidden files.
 Use one parent directory on every operator machine:
 
 ```text
-~/Programming/gitea.<homelab-domain>/hhlab-insfrastructure/
+~/infra/
   nix-cluster/
   nix-cluster-private/
   nix-pi/
@@ -56,7 +56,7 @@ Override variable:
 Preflight validation:
 
 ```bash
-cd ~/Programming/gitea.<homelab-domain>/hhlab-insfrastructure/nix-cluster
+cd ~/infra/nix-cluster
 nix run "path:$PWD#validate-private-config" -- cluster-pi-01
 nix run "path:$PWD#validate-cluster-node" -- cluster-pi-01
 ```
@@ -78,7 +78,7 @@ Override variable:
 Preflight validation:
 
 ```bash
-cd ~/Programming/gitea.<homelab-domain>/hhlab-insfrastructure/nix-pi
+cd ~/infra/nix-pi
 nix run "path:$PWD#validate-private-config" -- rpi-box-01
 nix run "path:$PWD#validate-pi-host" -- rpi-box-01
 ```

@@ -56,7 +56,7 @@ The important live services are:
   - internal service `default/kubernetes` as `ClusterIP`
 - `traefik/traefik`:
   - `LoadBalancer`
-  - external IP `192.168.1.36`
+  - external IP `192.0.2.36`
   - ports `80` and `443`
 - `observability/kube-state-metrics`:
   - `NodePort`
@@ -70,7 +70,7 @@ The important live services are:
 The important live ingress is:
 
 - `headlamp.<homelab-domain>`
-  - address `192.168.1.36`
+  - address `192.0.2.36`
   - class `traefik`
 
 ### Live MetalLB
@@ -81,7 +81,7 @@ Verified live:
 
 - `IPAddressPool`:
   - `metallb-system/homelab-lan`
-  - addresses `192.168.1.36-192.168.1.40`
+  - addresses `192.0.2.36-192.0.2.40`
 - `L2Advertisement`:
   - `metallb-system/homelab-lan`
 
@@ -127,7 +127,7 @@ But live cluster state shows:
 
 - Headlamp service is `ClusterIP`
 - Headlamp is exposed through Traefik ingress
-- `headlamp.<homelab-domain>` already routes to `192.168.1.36`
+- `headlamp.<homelab-domain>` already routes to `192.0.2.36`
 
 This means the repo currently models an outdated exposure shape.
 
@@ -279,12 +279,12 @@ Verified result:
 
 At the time of this handoff:
 
-- `cluster-api.<homelab-domain>` resolves to `192.168.1.31`
+- `cluster-api.<homelab-domain>` resolves to `192.0.2.31`
 
 Important interpretation:
 
 - there is already a cluster load balancer in the environment
-- but it is for Traefik ingress on `192.168.1.36`
+- but it is for Traefik ingress on `192.0.2.36`
 - it is **not** currently a load-balanced frontend for the Kubernetes API
 
 So:
@@ -427,7 +427,7 @@ Questions to answer later:
 Important rule:
 
 - do **not** point `cluster-api` at the existing Traefik `LoadBalancer`
-  address `192.168.1.36` unless a deliberate TCP API frontend is implemented
+  address `192.0.2.36` unless a deliberate TCP API frontend is implemented
   there for `6443`
 
 ## Validation Checklist For The Next Session
@@ -437,7 +437,7 @@ Use these checks after each phase.
 ### Cluster inventory checks
 
 ```bash
-ssh -i "$NIX_CLUSTER_IDENTITY_FILE" -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5 eduardo@192.168.1.32 \
+ssh -i "$NIX_CLUSTER_IDENTITY_FILE" -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5 operator@192.0.2.32 \
   'sudo k3s kubectl get nodes -o wide; echo; sudo k3s kubectl get deploy,ds,svc,ingress -A -o wide'
 ```
 

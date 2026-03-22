@@ -71,7 +71,7 @@ Important details:
   - live `app.kubernetes.io/instance` must be `traefik-traefik`
 - service exposure remains:
   - `LoadBalancer`
-  - IP `192.168.1.36`
+  - IP `192.0.2.36`
   - ports `80` and `443`
 
 Important implementation note:
@@ -97,7 +97,7 @@ Important details:
 - controller image/live version: `quay.io/metallb/controller:v0.15.3`
 - speaker image/live version: `quay.io/metallb/speaker:v0.15.3`
 - IP pool remains:
-  - `192.168.1.36-192.168.1.40`
+  - `192.0.2.36-192.0.2.40`
 - `L2Advertisement` remains tied to pool `homelab-lan`
 
 Important implementation note:
@@ -123,7 +123,7 @@ Headlamp repo state now matches the live cluster:
 - service type: `ClusterIP`
 - ingress class: `traefik`
 - host: `headlamp.<homelab-domain>`
-- TLS secret: `homelab-wildcard-tls`
+- TLS secret: `<private-ingress-tls-secret>`
 
 Files updated:
 
@@ -141,7 +141,7 @@ Files updated:
 - ingress class: `traefik`
 - host: `kube-state-metrics.<homelab-domain>`
 - path: `/metrics`
-- TLS secret: `homelab-wildcard-tls`
+- TLS secret: `<private-ingress-tls-secret>`
 
 Files updated:
 
@@ -222,11 +222,11 @@ This cleanup was deployed successfully to:
 
 The only new DNS requirement identified and requested during the session was:
 
-- add `kube-state-metrics.<homelab-domain> -> 192.168.1.36`
+- add `kube-state-metrics.<homelab-domain> -> 192.0.2.36`
 
 Existing important DNS names intentionally left unchanged:
 
-- `headlamp.<homelab-domain> -> 192.168.1.36`
+- `headlamp.<homelab-domain> -> 192.0.2.36`
 - `cluster-api.<homelab-domain>` remains separate from Traefik ingress
 
 Important rule reaffirmed:
@@ -263,7 +263,7 @@ Important services live at the end of session:
 
 - `traefik/traefik`
   - `LoadBalancer`
-  - external IP `192.168.1.36`
+  - external IP `192.0.2.36`
 - `headlamp/headlamp`
   - `ClusterIP`
 - `observability/kube-state-metrics`
@@ -275,10 +275,10 @@ Important ingress live at the end of session:
 
 - `headlamp.<homelab-domain>`
   - class `traefik`
-  - address `192.168.1.36`
+  - address `192.0.2.36`
 - `kube-state-metrics.<homelab-domain>`
   - class `traefik`
-  - address `192.168.1.36`
+  - address `192.0.2.36`
 
 ### Prometheus
 
@@ -373,7 +373,7 @@ cluster state:
 - admin SSH keys from:
   - `/etc/ssh/authorized_keys/eduardo` on `cluster-pi-01`
 - trusted builder public key from live Nix config output:
-  - `rpi-box-01:0WBuomW1SZQTmDTm/97lk7OZGFvJ7cPByl5lf3bt/B8=`
+  - `rpi-box-01:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=`
 
 These were written into:
 
@@ -386,9 +386,9 @@ Important:
 
 ### 4. The builder does not currently hold the missing private override either
 
-The remote ARM builder at `192.168.1.58` was checked and did not have:
+The remote ARM builder at `192.0.2.58` was checked and did not have:
 
-- `~/Programming/gitea.<homelab-domain>/hhlab-insfrastructure/nix-cluster/nixos/hosts/private/overrides.nix`
+- `~/infra/nix-cluster/nixos/hosts/private/overrides.nix`
 
 So the workaround was not “build from the builder checkout”.
 The missing local private override had to be recreated first.
@@ -521,10 +521,10 @@ Likely check list:
 
 - confirm cluster token should stay as recovered
 - confirm admin authorized key set should stay:
-  - `meganix`
+  - `operator-workstation`
   - `thinkpad`
 - confirm trusted builder key should stay:
-  - `rpi-box-01:0WBuomW1SZQTmDTm/97lk7OZGFvJ7cPByl5lf3bt/B8=`
+  - `rpi-box-01:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=`
 
 ### Phase 4. Improve verification workflow across repos
 
@@ -554,9 +554,9 @@ After private config workflow hardening, consider:
 ### Cluster state
 
 ```bash
-export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/meganix_ed25519}"
+export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/operator_ed25519}"
 
-ssh -i "$NIX_CLUSTER_IDENTITY_FILE" -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5 eduardo@192.168.1.32 \
+ssh -i "$NIX_CLUSTER_IDENTITY_FILE" -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5 operator@192.0.2.32 \
   'sudo k3s kubectl get nodes -o wide; echo; sudo k3s kubectl get deploy,ds,svc,ingress -A -o wide'
 ```
 

@@ -50,7 +50,7 @@ current operational reality.
 ## Remote Build Host
 
 - host: `rpi-box-01`
-- remote workspace used for this session: `/home/eduardo/nix-cluster`
+- remote workspace used for this session: `~/nix-cluster`
 
 There was no existing checkout there at the start of the session, so the
 current repository contents were copied to that path before building.
@@ -69,7 +69,7 @@ This removed stale unrooted cluster image artifacts left from previous builds.
 
 ## Build Command Used
 
-The build was started on `rpi-box-01` from `/home/eduardo/nix-cluster` with:
+The build was started on `rpi-box-01` from `~/nix-cluster` with:
 
 ```bash
 nix build .#bootstrap-sd-image --print-out-paths
@@ -82,7 +82,7 @@ The build completed successfully.
 Result symlink:
 
 ```text
-/home/eduardo/nix-cluster/result
+~/nix-cluster/result
 ```
 
 Resolved output directory:
@@ -174,7 +174,7 @@ node-specific configs such as:
 When ready to flash later, use the built artifact from:
 
 ```text
-/home/eduardo/nix-cluster/result
+~/nix-cluster/result
 ```
 
 or directly from:

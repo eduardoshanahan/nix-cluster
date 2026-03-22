@@ -48,7 +48,7 @@ Use the same parent directory on every operator machine.
 Recommended layout for repos that currently need companion repos:
 
 ```text
-~/Programming/gitea.<homelab-domain>/hhlab-insfrastructure/
+~/infra/
   nix-cluster/
   nix-cluster-private/
   nix-pi/
@@ -173,7 +173,7 @@ For each repo that uses the companion model:
 For `nix-cluster`, that means:
 
 ```bash
-cd ~/Programming/gitea.<homelab-domain>/hhlab-insfrastructure/nix-cluster
+cd ~/infra/nix-cluster
 nix run "path:$PWD#validate-private-config" -- cluster-pi-01
 nix run "path:$PWD#validate-cluster-node" -- cluster-pi-01
 ```

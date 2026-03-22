@@ -70,7 +70,7 @@ That image was then flashed to the SD cards and booted on the Pis.
 
 From `cluster-pi-01`, the cluster currently shows only one node:
 
-- `cluster-pi-01` at `192.168.1.31`
+- `cluster-pi-01` at `192.0.2.31`
 
 That node is healthy:
 
@@ -83,11 +83,11 @@ That node is healthy:
 
 Direct checks showed:
 
-- `192.168.1.31` responds as `cluster-pi-01`, `k3s` active
-- `192.168.1.32` responds as `cluster-pi-01`, `k3s` active
-- `192.168.1.33` responds as `cluster-pi-01`, `k3s` active
-- `192.168.1.34` responds as `cluster-pi-01`, `k3s` active
-- `192.168.1.35` responds as `cluster-pi-01`, `k3s` activating
+- `192.0.2.31` responds as `cluster-pi-01`, `k3s` active
+- `192.0.2.32` responds as `cluster-pi-01`, `k3s` active
+- `192.0.2.33` responds as `cluster-pi-01`, `k3s` active
+- `192.0.2.34` responds as `cluster-pi-01`, `k3s` active
+- `192.0.2.35` responds as `cluster-pi-01`, `k3s` activating
 
 So all or nearly all Pis are booting the shared bootstrap image successfully,
 but they have not yet been configured into their real node identities.
@@ -109,11 +109,11 @@ The missing piece is now very clear:
 
 | Node | Intended role | Expected IP | MAC |
 | --- | --- | --- | --- |
-| `cluster-pi-01` | control plane | `192.168.1.31` | `e4:5f:01:5f:18:7d` |
-| `cluster-pi-02` | control plane | `192.168.1.32` | `e4:5f:01:5f:18:b9` |
-| `cluster-pi-03` | control plane | `192.168.1.33` | `e4:5f:01:5f:19:8b` |
-| `cluster-pi-04` | worker | `192.168.1.34` | `e4:5f:01:5f:18:f5` |
-| `cluster-pi-05` | worker | `192.168.1.35` | `e4:5f:01:5f:19:2e` |
+| `cluster-pi-01` | control plane | `192.0.2.31` | `aa:bb:cc:dd:ee:ff` |
+| `cluster-pi-02` | control plane | `192.0.2.32` | `aa:bb:cc:dd:ee:ff` |
+| `cluster-pi-03` | control plane | `192.0.2.33` | `aa:bb:cc:dd:ee:ff` |
+| `cluster-pi-04` | worker | `192.0.2.34` | `aa:bb:cc:dd:ee:ff` |
+| `cluster-pi-05` | worker | `192.0.2.35` | `aa:bb:cc:dd:ee:ff` |
 
 ## Immediate Next Steps
 
@@ -127,10 +127,10 @@ Recommended sequence:
    host after first boot.
 2. Decide how to identify each live Pi reliably before applying config.
    The current DHCP reservations and MAC inventory are already available.
-3. Apply node-specific configuration to `192.168.1.31` first and confirm the
+3. Apply node-specific configuration to `192.0.2.31` first and confirm the
    flow still works cleanly.
-4. Apply node-specific configuration to `192.168.1.32` through
-   `192.168.1.35`, turning them into their intended identities and roles.
+4. Apply node-specific configuration to `192.0.2.32` through
+   `192.0.2.35`, turning them into their intended identities and roles.
 5. Verify the three control-plane nodes form quorum.
 6. Verify the two worker nodes join cleanly.
 

@@ -4,4 +4,4 @@ metadata:
   name: headlamp
   labels:
     app.kubernetes.io/part-of: operations
-    homelab.<homelab-domain>/domain: operations
+    __HOMELAB_NAMESPACE_LABEL_PREFIX__/domain: operations

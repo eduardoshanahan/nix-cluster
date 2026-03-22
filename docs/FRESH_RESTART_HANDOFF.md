@@ -72,11 +72,11 @@ That should be the first implementation goal of the next session.
 
 | Node | Role | DHCP reservation | MAC address |
 | --- | --- | --- | --- |
-| `cluster-pi-01` | control plane | `192.168.1.31` | `e4:5f:01:5f:18:7d` |
-| `cluster-pi-02` | control plane | `192.168.1.32` | `e4:5f:01:5f:18:b9` |
-| `cluster-pi-03` | control plane | `192.168.1.33` | `e4:5f:01:5f:19:8b` |
-| `cluster-pi-04` | worker | `192.168.1.34` | `e4:5f:01:5f:18:f5` |
-| `cluster-pi-05` | worker | `192.168.1.35` | `e4:5f:01:5f:19:2e` |
+| `cluster-pi-01` | control plane | `192.0.2.31` | `aa:bb:cc:dd:ee:ff` |
+| `cluster-pi-02` | control plane | `192.0.2.32` | `aa:bb:cc:dd:ee:ff` |
+| `cluster-pi-03` | control plane | `192.0.2.33` | `aa:bb:cc:dd:ee:ff` |
+| `cluster-pi-04` | worker | `192.0.2.34` | `aa:bb:cc:dd:ee:ff` |
+| `cluster-pi-05` | worker | `192.0.2.35` | `aa:bb:cc:dd:ee:ff` |
 
 ## Recommended Next Session Sequence
 

@@ -26,24 +26,24 @@ Key repo/workflow outcomes:
 
 ## Final Verified Cluster State
 
-Verified from `192.168.1.31` near the end of the session:
+Verified from `192.0.2.31` near the end of the session:
 
 ```text
 NAME            STATUS   ROLES                AGE   VERSION        INTERNAL-IP
-cluster-pi-01   Ready    control-plane,etcd   34h   v1.35.2+k3s1   192.168.1.31
-cluster-pi-02   Ready    control-plane,etcd   10h   v1.35.2+k3s1   192.168.1.32
-cluster-pi-03   Ready    control-plane,etcd   43m   v1.35.2+k3s1   192.168.1.33
-cluster-pi-04   Ready    <none>               26m   v1.35.2+k3s1   192.168.1.34
-cluster-pi-05   Ready    <none>               14s   v1.35.2+k3s1   192.168.1.35
+cluster-pi-01   Ready    control-plane,etcd   34h   v1.35.2+k3s1   192.0.2.31
+cluster-pi-02   Ready    control-plane,etcd   10h   v1.35.2+k3s1   192.0.2.32
+cluster-pi-03   Ready    control-plane,etcd   43m   v1.35.2+k3s1   192.0.2.33
+cluster-pi-04   Ready    <none>               26m   v1.35.2+k3s1   192.0.2.34
+cluster-pi-05   Ready    <none>               14s   v1.35.2+k3s1   192.0.2.35
 ```
 
 Per-node runtime summary:
 
-- `192.168.1.31`: hostname `cluster-pi-01`, `k3s` `active`
-- `192.168.1.32`: hostname `cluster-pi-02`, `k3s` `active`
-- `192.168.1.33`: hostname `cluster-pi-03`, `k3s` `active`
-- `192.168.1.34`: hostname `cluster-pi-04`, `k3s` `active`
-- `192.168.1.35`: hostname `cluster-pi-05`, `k3s` `active`
+- `192.0.2.31`: hostname `cluster-pi-01`, `k3s` `active`
+- `192.0.2.32`: hostname `cluster-pi-02`, `k3s` `active`
+- `192.0.2.33`: hostname `cluster-pi-03`, `k3s` `active`
+- `192.0.2.34`: hostname `cluster-pi-04`, `k3s` `active`
+- `192.0.2.35`: hostname `cluster-pi-05`, `k3s` `active`
 
 ## What Worked
 
@@ -51,7 +51,7 @@ Per-node runtime summary:
 
 This is now real, not theoretical.
 
-Verified live on `192.168.1.58`:
+Verified live on `192.0.2.58`:
 
 - `require-sigs = true`
 - `secret-key-files = /etc/nix/rpi-box-01-priv.pem`
@@ -59,7 +59,7 @@ Verified live on `192.168.1.58`:
 Builder public key used by cluster nodes:
 
 ```text
-rpi-box-01:0WBuomW1SZQTmDTm/97lk7OZGFvJ7cPByl5lf3bt/B8=
+rpi-box-01:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
 ```
 
 ### 2. Cross-host deploys now work when trust is present
@@ -67,11 +67,11 @@ rpi-box-01:0WBuomW1SZQTmDTm/97lk7OZGFvJ7cPByl5lf3bt/B8=
 This was proven by rebuilding `cluster-pi-02` with:
 
 ```bash
-export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/meganix_ed25519}"
+export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/operator_ed25519}"
 
-NIX_CLUSTER_BUILD_HOST='eduardo@192.168.1.58' \
+NIX_CLUSTER_BUILD_HOST='operator@192.0.2.58' \
 NIX_CLUSTER_SSHOPTS="-i $NIX_CLUSTER_IDENTITY_FILE -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5" \
-  nix run .#deploy-cluster-node -- cluster-pi-02 eduardo@192.168.1.32
+  nix run .#deploy-cluster-node -- cluster-pi-02 operator@192.0.2.32
 ```
 
 That build happened on `rpi-box-01`, the signed paths were accepted by
@@ -91,7 +91,7 @@ What consistently happened on `.33`, `.34`, and `.35`:
 
 ### 4. Control-plane recovery pattern is now proven
 
-For `cluster-pi-03` at `192.168.1.33`, the successful sequence was:
+For `cluster-pi-03` at `192.0.2.33`, the successful sequence was:
 
 1. self-build deploy of `cluster-pi-03`
 2. verify `/etc/hostname = cluster-pi-03` but runtime hostname still stale
@@ -178,7 +178,7 @@ the cluster admin authorized-keys set.
 For this environment, use:
 
 ```bash
-export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/meganix_ed25519}"
+export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/operator_ed25519}"
 
 ssh -i "$NIX_CLUSTER_IDENTITY_FILE" \
   -F /dev/null \
@@ -193,11 +193,11 @@ ssh -i "$NIX_CLUSTER_IDENTITY_FILE" \
 For nodes that already trust `rpi-box-01`:
 
 ```bash
-export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/meganix_ed25519}"
+export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/operator_ed25519}"
 
-NIX_CLUSTER_BUILD_HOST='eduardo@192.168.1.58' \
+NIX_CLUSTER_BUILD_HOST='operator@192.0.2.58' \
 NIX_CLUSTER_SSHOPTS="-i $NIX_CLUSTER_IDENTITY_FILE -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5" \
-  nix run .#deploy-cluster-node -- cluster-pi-0N eduardo@192.168.1.3N
+  nix run .#deploy-cluster-node -- cluster-pi-0N operator@192.0.2.3N
 ```
 
 ### First-conversion fallback
@@ -205,15 +205,15 @@ NIX_CLUSTER_SSHOPTS="-i $NIX_CLUSTER_IDENTITY_FILE -F /dev/null -o IdentitiesOnl
 For a node that does not yet trust the builder:
 
 ```bash
-export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/meganix_ed25519}"
+export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/operator_ed25519}"
 
 NIX_CLUSTER_SSHOPTS="-i $NIX_CLUSTER_IDENTITY_FILE -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5" \
-  nix run .#deploy-cluster-node -- --self-build cluster-pi-0N eduardo@192.168.1.3N
+  nix run .#deploy-cluster-node -- --self-build cluster-pi-0N operator@192.0.2.3N
 ```
 
 ### Known-good cluster verification
 
-From `192.168.1.31`:
+From `192.0.2.31`:
 
 ```bash
 sudo k3s kubectl get nodes -o wide
