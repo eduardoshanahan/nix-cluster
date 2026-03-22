@@ -156,6 +156,9 @@ If you need to commit, prefer this flow:
 3. run normal Git commands without bypassing hooks
 4. push the finished work to `origin` before ending the session when the task is
    complete and the user has not asked to keep it local
+5. if the task changes service behavior, complete the rollout after push with a
+   full rebuild/deploy of the owning cluster node or nodes and verify on the
+   live system that the fix still works after the rebuild
 
 ## Validation Expectations
 
