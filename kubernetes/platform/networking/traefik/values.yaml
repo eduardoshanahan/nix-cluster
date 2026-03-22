@@ -10,7 +10,7 @@ service:
   enabled: true
   type: LoadBalancer
   spec:
-    loadBalancerIP: 192.0.2.36
+    loadBalancerIP: __TRAEFIK_LOAD_BALANCER_IP__
 
 metrics:
   prometheus: null

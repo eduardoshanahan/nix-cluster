@@ -1,7 +1,4 @@
 /result
 /result-*
 /tmp
-/nixos/hosts/private/*.nix
-/secrets/
-/kubernetes/observability/kube-state-metrics/charts/
-/kubernetes/operations/headlamp/charts/
+/.direnv/

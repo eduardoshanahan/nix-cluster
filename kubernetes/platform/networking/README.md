@@ -9,7 +9,8 @@ Current components:
 
 The current homelab LAN address pool is:
 
-- `192.0.2.36-192.0.2.40`
+- configured through `homelab.kubernetes.metallb.addressPool` in
+  `nix-cluster-private`
 
 Build the manifests with:
 

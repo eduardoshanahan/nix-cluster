@@ -4,4 +4,4 @@ metadata:
   name: observability
   labels:
     app.kubernetes.io/part-of: observability
-    homelab.<homelab-domain>/domain: observability
+    __HOMELAB_NAMESPACE_LABEL_PREFIX__/domain: observability

@@ -71,7 +71,7 @@ The successful deploy command for `cluster-pi-01` was:
 ```bash
 NIX_SSHOPTS='-F /dev/null -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5' \
   /run/current-system/sw/bin/nixos-rebuild switch \
-  --flake 'path:/home/eduardo/Programming/gitea.<homelab-domain>/nix-cluster#cluster-pi-01' \
+  --flake 'path:#cluster-pi-01' \
   --build-host operator@192.0.2.58 \
   --target-host operator@192.0.2.31 \
   --sudo

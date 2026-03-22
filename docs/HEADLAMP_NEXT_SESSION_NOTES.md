@@ -2,7 +2,7 @@
 
 ## Current State
 
-- Headlamp is installed in this repo under [kubernetes/operations/headlamp](/home/eduardo/Programming/gitea.<homelab-domain>/nix-cluster/kubernetes/operations/headlamp).
+- Headlamp is installed in this repo under [kubernetes/operations/headlamp](../kubernetes/operations/headlamp).
 - Deployment pattern is `Kustomize` with a Helm chart.
 - Headlamp now uses an internal `ClusterIP` service and a standard Kubernetes `Ingress`.
 - The user created the DNS name `headlamp.<homelab-domain>`.
@@ -13,7 +13,7 @@
 ## Important Fix Already Applied
 
 - The first Headlamp pod crashed because chart `0.40.1` injected the unsupported argument `-session-ttl=86400`.
-- This was fixed with the Kustomize patch at [deployment-args-patch.yaml](/home/eduardo/Programming/gitea.<homelab-domain>/nix-cluster/kubernetes/operations/headlamp/deployment-args-patch.yaml).
+- This was fixed with the Kustomize patch at [deployment-args-patch.yaml](../kubernetes/operations/headlamp/deployment-args-patch.yaml).
 - Good `nix-cluster` commit for this state: `6e5dcda` with message `Fix Headlamp startup arguments`.
 
 ## Verified Working

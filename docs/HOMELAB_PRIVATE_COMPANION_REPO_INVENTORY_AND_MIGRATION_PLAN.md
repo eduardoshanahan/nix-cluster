@@ -39,7 +39,7 @@ move toward this shape:
 Recommended sibling layout when a repo truly needs a private companion:
 
 ```text
-~/Programming/gitea.<homelab-domain>/hhlab-insfrastructure/
+~/infra/
   nix-cluster/
   nix-cluster-private/
   nix-pi/

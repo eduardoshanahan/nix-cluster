@@ -1,14 +1,16 @@
 { ... }:
 {
   homelab.adminAuthorizedKeys = [
-    "ssh-ed25519 AAAA... replace-me"
+    "ssh-ed25519 AAAA... operator@example"
   ];
 
   # The public key above is embedded into the SD-card image so first boot can
   # use SSH key authentication directly without passwords.
 
-  homelab.domain = "hhlab.home.arpa";
-  homelab.cluster.apiServerEndpoint = "https://cluster-api.hhlab.home.arpa:6443";
+  homelab.domain = "cluster.example.internal";
+  homelab.cluster.apiServerEndpoint = "https://cluster-api.cluster.example.internal:6443";
+  homelab.kubernetes.ingressTlsSecretName = "replace-with-private-tls-secret";
+  homelab.kubernetes.metallb.addressPool = "198.51.100.10-198.51.100.20";
   homelab.cluster.clusterToken = "replace-with-a-private-bootstrap-token";
 
   # Use either DHCP reservations or static addressing.
@@ -17,10 +19,10 @@
   # networking.useDHCP = false;
   # networking.interfaces.eth0.ipv4.addresses = [
   #   {
-  #     address = "192.168.1.201";
+  #     address = "192.0.2.201";
   #     prefixLength = 24;
   #   }
   # ];
-  # networking.defaultGateway = "192.168.1.1";
-  # networking.nameservers = [ "192.168.1.10" ];
+  # networking.defaultGateway = "192.0.2.1";
+  # networking.nameservers = [ "192.0.2.10" ];
 }

@@ -361,41 +361,80 @@
             "''${rebuild_cmd[@]}"
           '';
         };
+        renderTemplatedKustomize =
+          {
+            name,
+            relativePath,
+          }:
+          pkgs.writeShellApplication {
+            inherit name;
+            runtimeInputs = [
+              pkgs.findutils
+              pkgs.gnused
+              pkgs.kubectl
+              pkgs.kubernetes-helm
+              pkgs.nix
+              validatePrivateConfig
+            ];
+            text = ''
+              set -euo pipefail
+
+              private_flake_dir="''${NIX_CLUSTER_PRIVATE_FLAKE:-$PWD/../nix-cluster-private}"
+              private_override_args=(--no-write-lock-file --override-input private "path:$private_flake_dir")
+              flake_ref="path:$PWD#nixosConfigurations.cluster-pi-01"
+
+              validate-private-config --quiet cluster-pi-01
+
+              domain="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.domain" --raw)"
+              ingress_tls_secret_name="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.kubernetes.ingressTlsSecretName" --raw)"
+              metallb_address_pool="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.kubernetes.metallb.addressPool" --raw)"
+
+              if [ "$ingress_tls_secret_name" = "replace-with-private-tls-secret" ]; then
+                echo "render failed: set homelab.kubernetes.ingressTlsSecretName in nix-cluster-private" >&2
+                exit 1
+              fi
+
+              if [ "$metallb_address_pool" = "198.51.100.10-198.51.100.20" ]; then
+                echo "render failed: set homelab.kubernetes.metallb.addressPool in nix-cluster-private" >&2
+                exit 1
+              fi
+
+              tmpdir="$(mktemp -d)"
+              trap 'rm -rf "$tmpdir"' EXIT
+              render_root="$tmpdir/render"
+
+              cp -R "$PWD/kubernetes" "$render_root"
+
+              headlamp_host="headlamp.$domain"
+              kube_state_metrics_host="kube-state-metrics.$domain"
+              namespace_label_prefix="homelab.$domain"
+              traefik_load_balancer_ip="''${metallb_address_pool%%-*}"
+
+              while IFS= read -r -d $'\0' file; do
+                sed -i \
+                  -e "s|__HEADLAMP_HOST__|$headlamp_host|g" \
+                  -e "s|__KUBE_STATE_METRICS_HOST__|$kube_state_metrics_host|g" \
+                  -e "s|__INGRESS_TLS_SECRET_NAME__|$ingress_tls_secret_name|g" \
+                  -e "s|__METALLB_ADDRESS_POOL__|$metallb_address_pool|g" \
+                  -e "s|__TRAEFIK_LOAD_BALANCER_IP__|$traefik_load_balancer_ip|g" \
+                  -e "s|__HOMELAB_NAMESPACE_LABEL_PREFIX__|$namespace_label_prefix|g" \
+                  "$file"
+              done < <(find "$render_root" -type f \( -name '*.yaml' -o -name '*.yml' \) -print0)
+
+              exec kubectl kustomize --enable-helm "$render_root/${relativePath}"
+            '';
+          };
         renderObservability = pkgs.writeShellApplication {
           name = "render-observability";
-          runtimeInputs = [
-            pkgs.kubectl
-            pkgs.kubernetes-helm
-          ];
-          text = ''
-            set -euo pipefail
-
-            exec kubectl kustomize --enable-helm "$PWD/kubernetes/platform/observability"
-          '';
+          relativePath = "platform/observability";
         };
-        renderPlatform = pkgs.writeShellApplication {
+        renderPlatform = renderTemplatedKustomize {
           name = "render-platform";
-          runtimeInputs = [
-            pkgs.kubectl
-            pkgs.kubernetes-helm
-          ];
-          text = ''
-            set -euo pipefail
-
-            exec kubectl kustomize --enable-helm "$PWD/kubernetes/platform"
-          '';
+          relativePath = "platform";
         };
-        renderHeadlamp = pkgs.writeShellApplication {
+        renderHeadlamp = renderTemplatedKustomize {
           name = "render-headlamp";
-          runtimeInputs = [
-            pkgs.kubectl
-            pkgs.kubernetes-helm
-          ];
-          text = ''
-            set -euo pipefail
-
-            exec kubectl kustomize --enable-helm "$PWD/kubernetes/operations"
-          '';
+          relativePath = "operations";
         };
       in
       {

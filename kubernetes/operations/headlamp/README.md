@@ -8,7 +8,7 @@ Current deployment shape:
 - namespace: `headlamp`
 - service type: `ClusterIP`
 - ingress hostname: `headlamp.<homelab-domain>`
-- ingress IP: `192.0.2.36` via Traefik on MetalLB
+- ingress IP: from the private MetalLB address pool via Traefik
 - access scheme: HTTPS
 - service account role: `cluster-admin`
 
@@ -21,7 +21,7 @@ After deployment, access it at:
 https://headlamp.<homelab-domain>/
 ```
 
-Pi-hole should point `headlamp.<homelab-domain>` at the shared Traefik ingress
+Your DNS should point `headlamp.<homelab-domain>` at the shared Traefik ingress
 IP rather than a specific cluster node IP.
 
 Build the manifests with:

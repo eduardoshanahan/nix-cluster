@@ -62,12 +62,13 @@ of truth is now the sibling private flake.
 { ... }:
 {
   homelab.adminAuthorizedKeys = [
-    "ssh-ed25519 AAAA... your-key"
+    "ssh-ed25519 AAAA... operator@example"
   ];
 
-  homelab.domain = "<homelab-domain>";
-
-  homelab.cluster.apiServerEndpoint = "https://cluster-api.<homelab-domain>:6443";
+  homelab.domain = "cluster.example.internal";
+  homelab.cluster.apiServerEndpoint = "https://cluster-api.cluster.example.internal:6443";
+  homelab.kubernetes.ingressTlsSecretName = "replace-with-private-tls-secret";
+  homelab.kubernetes.metallb.addressPool = "198.51.100.10-198.51.100.20";
   homelab.cluster.clusterToken = "replace-with-a-private-token";
   homelab.nix.trustedBuilderPublicKeys = [
     "rpi-box-01:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="

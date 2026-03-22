@@ -65,12 +65,16 @@ The repo has an explicit preflight check for the private input:
 
 - `nix run "path:$PWD#validate-private-config" -- cluster-pi-01`
 
-Use that helper before deploys and validations.
+Use that helper before deploys, validations, and Kubernetes manifest renders.
 
 By default the helper scripts look for `../nix-cluster-private`.
 If your private flake lives elsewhere, set:
 
 - `NIX_CLUSTER_PRIVATE_FLAKE=/absolute/path/to/nix-cluster-private`
+
+The Kubernetes render helpers also consume the sibling private flake for
+environment-specific values such as ingress hostnames, ingress TLS secret
+names, and MetalLB address pools.
 
 Important: validate and deploy node configs with path-based flake refs so the
 local flake path and private override are included in evaluation:

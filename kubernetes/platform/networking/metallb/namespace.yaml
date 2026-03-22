@@ -3,5 +3,5 @@ kind: Namespace
 metadata:
   labels:
     app.kubernetes.io/part-of: networking
-    homelab.<homelab-domain>/domain: networking
+    __HOMELAB_NAMESPACE_LABEL_PREFIX__/domain: networking
   name: metallb-system

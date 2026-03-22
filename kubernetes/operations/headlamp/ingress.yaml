@@ -9,10 +9,10 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - headlamp.<homelab-domain>
-      secretName: <private-ingress-tls-secret>
+        - __HEADLAMP_HOST__
+      secretName: __INGRESS_TLS_SECRET_NAME__
   rules:
-    - host: headlamp.<homelab-domain>
+    - host: __HEADLAMP_HOST__
       http:
         paths:
           - path: /
