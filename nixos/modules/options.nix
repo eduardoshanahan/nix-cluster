@@ -86,7 +86,7 @@
       spark = {
         minioEndpoint = lib.mkOption {
           type = lib.types.str;
-          default = "s3.internal.example";
+          default = "minio.internal.example";
           description = "MinIO S3 endpoint hostname for Spark event logs and data.";
         };
 
