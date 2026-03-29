@@ -26,7 +26,7 @@ Credentials are templated from `nix-cluster-private/modules/shared.nix`:
 ```nix
 homelab.spark.minioAccessKey = "your-access-key";
 homelab.spark.minioSecretKey = "your-secret-key";
-homelab.spark.minioEndpoint = "s3.hhlab.home.arpa";
+homelab.spark.minioEndpoint = "minio.hhlab.home.arpa";
 homelab.spark.minioBucket = "spark-homelab";
 ```
 
@@ -42,5 +42,5 @@ Test S3 access from within the cluster:
 
 ```bash
 kubectl run -n spark -it --rm s3-test --image=amazon/aws-cli --restart=Never -- \
-  s3 --endpoint-url=http://s3.hhlab.home.arpa:9000 ls s3://spark-homelab/
+  s3 --endpoint-url=http://minio.hhlab.home.arpa:9000 ls s3://spark-homelab/
 ```

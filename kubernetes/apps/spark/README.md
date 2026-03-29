@@ -86,7 +86,7 @@ This ensures Spark workloads don't starve other services on the cluster.
    Before deploying, create the S3 bucket on your MinIO instance:
 
    ```bash
-   # Access MinIO UI at s3.hhlab.home.arpa
+   # Access MinIO UI at minio.hhlab.home.arpa
    # Create bucket: spark-homelab
    # Generate access key for Spark
    ```
@@ -96,7 +96,7 @@ This ensures Spark workloads don't starve other services on the cluster.
    Add MinIO credentials to `nix-cluster-private/modules/shared.nix`:
 
    ```nix
-   homelab.spark.minioEndpoint = "s3.hhlab.home.arpa";
+   homelab.spark.minioEndpoint = "minio.hhlab.home.arpa";
    homelab.spark.minioBucket = "spark-homelab";
    homelab.spark.minioAccessKey = "<your-access-key>";
    homelab.spark.minioSecretKey = "<your-secret-key>";
@@ -219,7 +219,7 @@ Configuration in `spark-history-server/deployment.yaml`:
 
 Configuration in `minio-integration/secret.yaml`:
 
-- **Endpoint**: s3.hhlab.home.arpa:9000
+- **Endpoint**: minio.hhlab.home.arpa:9000
 - **Bucket**: spark-homelab
 - **Path Style Access**: Enabled (MinIO requirement)
 - **Credentials**: Templated from nix-cluster-private
@@ -260,14 +260,14 @@ kubectl logs -n spark deployment/spark-history-server | grep s3a
 
 Test S3 endpoint:
 ```bash
-kubectl exec -n spark <history-pod> -- curl http://s3.hhlab.home.arpa:9000
+kubectl exec -n spark <history-pod> -- curl http://minio.hhlab.home.arpa:9000
 ```
 
 Verify bucket exists:
 ```bash
 # From any pod with aws-cli
 kubectl run -n spark -it --rm s3-test --image=amazon/aws-cli --restart=Never -- \
-  s3 --endpoint-url=http://s3.hhlab.home.arpa:9000 ls s3://spark-homelab/
+  s3 --endpoint-url=http://minio.hhlab.home.arpa:9000 ls s3://spark-homelab/
 ```
 
 **Solution**: Verify MinIO credentials in secret, check bucket exists, ensure network connectivity.
