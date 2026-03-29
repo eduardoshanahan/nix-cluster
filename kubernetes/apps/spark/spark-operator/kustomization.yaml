@@ -4,12 +4,5 @@ kind: Kustomization
 namespace: spark
 
 resources:
-  - servicemonitor.yaml
-
-helmCharts:
-  - name: spark-kubernetes-operator
-    releaseName: spark-operator
-    repo: https://apache.github.io/spark-kubernetes-operator
-    version: 1.6.0
-    namespace: spark
-    valuesFile: values.yaml
+  - rendered-operator.yaml
+  # servicemonitor.yaml  # Requires Prometheus Operator CRDs

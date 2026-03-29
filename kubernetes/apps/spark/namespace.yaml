@@ -3,5 +3,6 @@ kind: Namespace
 metadata:
   name: spark
   labels:
-    app.kubernetes.io/part-of: __HOMELAB_NAMESPACE_LABEL_PREFIX__/spark
+    app.kubernetes.io/part-of: spark
+    homelab.domain: __DOMAIN__
     app.kubernetes.io/managed-by: kustomize

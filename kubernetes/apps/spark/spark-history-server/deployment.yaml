@@ -18,13 +18,37 @@ spec:
       serviceAccountName: spark-history-server
       nodeSelector:
         kubernetes.io/arch: arm64
+      initContainers:
+      - name: download-s3-jars
+        image: apache/spark:3.5.3
+        command:
+          - sh
+          - -c
+          - |
+            wget -P /opt/spark-extra-jars/ https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar
+            wget -P /opt/spark-extra-jars/ https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar
+        volumeMounts:
+          - name: spark-extra-jars
+            mountPath: /opt/spark-extra-jars
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
       containers:
       - name: spark-history-server
         image: apache/spark:3.5.3
         imagePullPolicy: IfNotPresent
         command:
           - /opt/spark/sbin/start-history-server.sh
+        volumeMounts:
+          - name: spark-extra-jars
+            mountPath: /opt/spark-extra-jars
         env:
+          - name: SPARK_DIST_CLASSPATH
+            value: "/opt/spark-extra-jars/*"
           - name: SPARK_NO_DAEMONIZE
             value: "true"
           - name: SPARK_HISTORY_OPTS
@@ -60,11 +84,16 @@ spec:
           httpGet:
             path: /
             port: 18080
-          initialDelaySeconds: 30
+          initialDelaySeconds: 120
           periodSeconds: 10
+          timeoutSeconds: 5
         readinessProbe:
           httpGet:
             path: /
             port: 18080
-          initialDelaySeconds: 10
-          periodSeconds: 5
+          initialDelaySeconds: 90
+          periodSeconds: 10
+          timeoutSeconds: 5
+      volumes:
+        - name: spark-extra-jars
+          emptyDir: {}
