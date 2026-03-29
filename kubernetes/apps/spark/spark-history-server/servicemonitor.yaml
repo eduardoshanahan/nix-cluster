@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: spark-history-server
+  namespace: spark
+  labels:
+    app: spark-history-server
+spec:
+  selector:
+    matchLabels:
+      app: spark-history-server
+  endpoints:
+    - port: metrics
+      path: /metrics/prometheus
+      interval: 30s

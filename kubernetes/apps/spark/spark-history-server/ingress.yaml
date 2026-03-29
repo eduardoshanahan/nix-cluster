@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: spark-history-server
+  namespace: spark
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - __SPARK_HISTORY_SERVER_HOST__
+      secretName: __INGRESS_TLS_SECRET_NAME__
+  rules:
+    - host: __SPARK_HISTORY_SERVER_HOST__
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: spark-history-server
+                port:
+                  number: 18080

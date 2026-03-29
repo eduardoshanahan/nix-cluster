@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-history-server
+  namespace: spark
+  labels:
+    app: spark-history-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spark-history-server
+  template:
+    metadata:
+      labels:
+        app: spark-history-server
+    spec:
+      serviceAccountName: spark-history-server
+      nodeSelector:
+        kubernetes.io/arch: arm64
+      containers:
+      - name: spark-history-server
+        image: apache/spark:3.5.3
+        imagePullPolicy: IfNotPresent
+        command:
+          - /opt/spark/sbin/start-history-server.sh
+        env:
+          - name: SPARK_NO_DAEMONIZE
+            value: "true"
+          - name: SPARK_HISTORY_OPTS
+            value: >-
+              -Dspark.history.fs.logDirectory=s3a://__MINIO_BUCKET__/spark-events
+              -Dspark.history.ui.port=18080
+              -Dspark.history.retainedApplications=50
+              -Dspark.history.fs.cleaner.enabled=true
+              -Dspark.history.fs.cleaner.maxAge=7d
+              -Dspark.hadoop.fs.s3a.endpoint=http://__MINIO_ENDPOINT__:9000
+              -Dspark.hadoop.fs.s3a.access.key=$(AWS_ACCESS_KEY_ID)
+              -Dspark.hadoop.fs.s3a.secret.key=$(AWS_SECRET_ACCESS_KEY)
+              -Dspark.hadoop.fs.s3a.path.style.access=true
+              -Dspark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem
+        envFrom:
+          - secretRef:
+              name: minio-s3-credentials
+        ports:
+          - name: http
+            containerPort: 18080
+            protocol: TCP
+          - name: metrics
+            containerPort: 4040
+            protocol: TCP
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 18080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 18080
+          initialDelaySeconds: 10
+          periodSeconds: 5
