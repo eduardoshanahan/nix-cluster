@@ -83,6 +83,32 @@
         };
       };
 
+      spark = {
+        minioEndpoint = lib.mkOption {
+          type = lib.types.str;
+          default = "s3.internal.example";
+          description = "MinIO S3 endpoint hostname for Spark event logs and data.";
+        };
+
+        minioBucket = lib.mkOption {
+          type = lib.types.str;
+          default = "spark-homelab";
+          description = "MinIO S3 bucket name for Spark workloads.";
+        };
+
+        minioAccessKey = lib.mkOption {
+          type = lib.types.str;
+          default = "CHANGE_ME_ACCESS_KEY";
+          description = "MinIO S3 access key for Spark (store in private config).";
+        };
+
+        minioSecretKey = lib.mkOption {
+          type = lib.types.str;
+          default = "CHANGE_ME_SECRET_KEY";
+          description = "MinIO S3 secret key for Spark (store in private config).";
+        };
+      };
+
       cluster = {
         enable = lib.mkOption {
           type = lib.types.bool;

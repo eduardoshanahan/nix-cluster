@@ -436,6 +436,74 @@
           name = "render-headlamp";
           relativePath = "operations";
         };
+        renderSpark = pkgs.writeShellApplication {
+          name = "render-spark";
+          runtimeInputs = [
+            pkgs.findutils
+            pkgs.gnused
+            pkgs.kubectl
+            pkgs.kubernetes-helm
+            pkgs.nix
+            validatePrivateConfig
+          ];
+          text = ''
+            set -euo pipefail
+
+            private_flake_dir="''${NIX_CLUSTER_PRIVATE_FLAKE:-$PWD/../nix-cluster-private}"
+            private_override_args=(--no-write-lock-file --override-input private "path:$private_flake_dir")
+            flake_ref="path:$PWD#nixosConfigurations.cluster-pi-01"
+
+            validate-private-config --quiet cluster-pi-01
+
+            domain="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.domain" --raw)"
+            ingress_tls_secret_name="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.kubernetes.ingressTlsSecretName" --raw)"
+            minio_endpoint="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.spark.minioEndpoint" --raw)"
+            minio_bucket="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.spark.minioBucket" --raw)"
+            minio_access_key="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.spark.minioAccessKey" --raw)"
+            minio_secret_key="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.spark.minioSecretKey" --raw)"
+
+            if [ "$ingress_tls_secret_name" = "replace-with-private-tls-secret" ]; then
+              echo "render failed: set homelab.kubernetes.ingressTlsSecretName in nix-cluster-private" >&2
+              exit 1
+            fi
+
+            if [ "$minio_access_key" = "CHANGE_ME_ACCESS_KEY" ]; then
+              echo "render failed: set homelab.spark.minioAccessKey in nix-cluster-private" >&2
+              exit 1
+            fi
+
+            if [ "$minio_secret_key" = "CHANGE_ME_SECRET_KEY" ]; then
+              echo "render failed: set homelab.spark.minioSecretKey in nix-cluster-private" >&2
+              exit 1
+            fi
+
+            tmpdir="$(mktemp -d)"
+            trap 'rm -rf "$tmpdir"' EXIT
+            render_root="$tmpdir/render"
+
+            cp -R "$PWD/kubernetes" "$render_root"
+
+            spark_history_server_host="spark-history.$domain"
+            spark_operator_host="spark-operator.$domain"
+            namespace_label_prefix="homelab.$domain"
+
+            while IFS= read -r -d $'\0' file; do
+              sed -i \
+                -e "s|__SPARK_HISTORY_SERVER_HOST__|$spark_history_server_host|g" \
+                -e "s|__SPARK_OPERATOR_HOST__|$spark_operator_host|g" \
+                -e "s|__INGRESS_TLS_SECRET_NAME__|$ingress_tls_secret_name|g" \
+                -e "s|__HOMELAB_NAMESPACE_LABEL_PREFIX__|$namespace_label_prefix|g" \
+                -e "s|__DOMAIN__|$domain|g" \
+                -e "s|__MINIO_ENDPOINT__|$minio_endpoint|g" \
+                -e "s|__MINIO_BUCKET__|$minio_bucket|g" \
+                -e "s|__MINIO_ACCESS_KEY__|$minio_access_key|g" \
+                -e "s|__MINIO_SECRET_KEY__|$minio_secret_key|g" \
+                "$file"
+            done < <(find "$render_root" -type f \( -name '*.yaml' -o -name '*.yml' \) -print0)
+
+            exec kubectl kustomize --enable-helm "$render_root/apps/spark"
+          '';
+        };
       in
       {
         packages.bootstrap-sd-image = bootstrapImage;
@@ -445,6 +513,7 @@
         packages.render-platform = renderPlatform;
         packages.render-observability = renderObservability;
         packages.render-headlamp = renderHeadlamp;
+        packages.render-spark = renderSpark;
 
         apps.validate-private-config = {
           type = "app";
@@ -474,6 +543,11 @@
         apps.render-headlamp = {
           type = "app";
           program = "${renderHeadlamp}/bin/render-headlamp";
+        };
+
+        apps.render-spark = {
+          type = "app";
+          program = "${renderSpark}/bin/render-spark";
         };
 
         devShells.default = pkgs.mkShell {

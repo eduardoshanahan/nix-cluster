@@ -1,0 +1,44 @@
+# Spark Operator Helm Chart Values
+# Chart version: 1.6.0
+# App version: 0.8.0
+
+# Resource limits for operator (conservative for Pi hardware)
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Webhook configuration
+webhook:
+  enable: true
+  port: 9443
+
+# ServiceAccount and RBAC
+serviceAccount:
+  create: true
+  name: spark-operator
+
+rbac:
+  create: true
+
+# Metrics for Prometheus
+metrics:
+  enable: true
+  port: 10254
+
+# Node selector for ARM64
+nodeSelector:
+  kubernetes.io/arch: arm64
+
+# Tolerations (if needed for control-plane scheduling)
+tolerations: []
+
+# Image configuration - verify ARM64 support
+# Default image should support ARM64, but document for investigation
+image:
+  repository: docker.io/apache/spark-kubernetes-operator
+  tag: 0.8.0
+  pullPolicy: IfNotPresent
