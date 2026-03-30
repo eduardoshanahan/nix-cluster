@@ -12,15 +12,22 @@ Build a custom Docker image based on `apache/spark:3.5.3` with the required JARs
 - `hadoop-aws-3.3.4.jar` - Hadoop S3A filesystem implementation
 - `aws-java-sdk-bundle-1.12.262.jar` - AWS SDK for S3 API calls
 
+## Architecture Considerations
+
+**Important**: The nix-cluster runs on Raspberry Pi 4 nodes which use ARM64 (aarch64) architecture. The custom Spark image must be built for ARM64, not AMD64 (x86_64).
+
+If you build on an x86_64 development machine without proper cross-compilation, you'll get "exec format error" when Kubernetes tries to run the container on ARM64 nodes.
+
 ## Building and Deploying
 
 ### Prerequisites
 
-- Docker installed on build machine (requires internet access to download JARs)
+- **Docker with buildx** (Docker Desktop or Docker Engine 19.03+)
+- **QEMU emulation** for ARM64 cross-compilation (automatically set up by script)
 - SSH access to cluster nodes (cluster-pi-01 through cluster-pi-05)
 - kubectl configured (see `docs/KUBECTL_ACCESS.md`)
 
-### Build and Deploy to Cluster
+### Build and Deploy to Cluster (Recommended)
 
 ```bash
 cd kubernetes/apps/spark/docker
@@ -28,90 +35,154 @@ cd kubernetes/apps/spark/docker
 ```
 
 This script will:
-1. Build the custom Spark image locally
-2. Save the image to a tar file
-3. Import the image to all k3s cluster nodes via SSH
-4. Verify the image is available on the cluster
+1. Check docker buildx availability
+2. Set up QEMU emulation for ARM64 architecture
+3. Create/use a multi-architecture builder
+4. Build the custom Spark image for linux/arm64
+5. Save the image to a tar file
+6. Import the image to all k3s cluster nodes via SSH
+7. Verify the image is available on the cluster
+
+**Why docker buildx?**
+
+The build script uses `docker buildx` to cross-compile ARM64 images on x86_64 hosts:
+- `--platform linux/arm64`: Target ARM64 architecture
+- `--builder=multiarch`: Uses buildx multi-platform builder
+- QEMU emulation allows running ARM64 binaries during build on x86_64 host
 
 ### Manual Build (Alternative)
 
-If you prefer to build manually:
+If you prefer to build manually for ARM64:
 
 ```bash
-# Build image
-docker build -t spark-s3:3.5.3 .
+# Step 1: Set up QEMU emulation for ARM64
+docker run --privileged --rm tonistiigi/binfmt --install arm64
 
-# Save image
+# Step 2: Create buildx builder (if not already exists)
+docker buildx create --name multiarch --driver docker-container --bootstrap
+
+# Step 3: Build ARM64 image
+docker buildx build \
+  --builder=multiarch \
+  --platform linux/arm64 \
+  --load \
+  -t spark-s3:3.5.3 \
+  .
+
+# Step 4: Save image to tar
 docker save spark-s3:3.5.3 -o spark-s3-3.5.3.tar
 
-# Import to each cluster node
+# Step 5: Import to each cluster node via SSH pipe (more efficient than scp)
 for node in cluster-pi-01 cluster-pi-02 cluster-pi-03 cluster-pi-04 cluster-pi-05; do
-    scp spark-s3-3.5.3.tar eduardo@${node}.hhlab.home.arpa:/tmp/
-    ssh eduardo@${node}.hhlab.home.arpa "sudo k3s ctr images import /tmp/spark-s3-3.5.3.tar"
-    ssh eduardo@${node}.hhlab.home.arpa "rm /tmp/spark-s3-3.5.3.tar"
+    echo "Importing to ${node}..."
+    ssh eduardo@${node}.hhlab.home.arpa "sudo k3s ctr images import -" < spark-s3-3.5.3.tar
 done
+
+# Clean up
+rm spark-s3-3.5.3.tar
 ```
+
+**Common mistake**: Using `docker build` without `buildx --platform linux/arm64` will create an AMD64 image on x86_64 hosts, which fails on ARM64 cluster with "exec format error".
 
 ### Verify Image on Cluster
 
 ```bash
-# Check image on a cluster node
+# Check image exists on a cluster node
 ssh eduardo@cluster-pi-01.hhlab.home.arpa "sudo k3s crictl images | grep spark-s3"
+
+# Expected output:
+# docker.io/library/spark-s3   3.5.3   149cafba02fd5   1.24GB
+
+# Verify correct architecture (should show arm64)
+ssh eduardo@cluster-pi-01.hhlab.home.arpa "sudo k3s crictl inspecti docker.io/library/spark-s3:3.5.3 | grep -A2 architecture"
+
+# Expected output:
+# "architecture": "arm64"
 ```
 
 ## Using the Custom Image
 
-### Update SparkApplication Manifests
+The example manifests in `kubernetes/apps/spark/examples/` are already configured to use the custom `spark-s3:3.5.3` image with S3 event logging enabled.
 
-1. Change the container image in sparkConf:
-   ```yaml
-   sparkConf:
-     spark.kubernetes.container.image: "spark-s3:3.5.3"
-   ```
-
-2. Uncomment S3 event logging configuration:
-   ```yaml
-   sparkConf:
-     spark.eventLog.enabled: "true"
-     spark.eventLog.dir: "s3a://spark-homelab/spark-events"
-     spark.hadoop.fs.s3a.endpoint: "http://minio.hhlab.home.arpa:9000"
-     spark.hadoop.fs.s3a.path.style.access: "true"
-     spark.hadoop.fs.s3a.impl: "org.apache.hadoop.fs.s3a.S3AFileSystem"
-   ```
-
-3. Uncomment AWS credentials in driver and executor specs:
-   ```yaml
-   driverSpec:
-     podTemplateSpec:
-       spec:
-         containers:
-         - name: spark-kubernetes-driver
-           env:
-           - name: AWS_ACCESS_KEY_ID
-             valueFrom:
-               secretKeyRef:
-                 name: minio-s3-credentials
-                 key: AWS_ACCESS_KEY_ID
-           - name: AWS_SECRET_ACCESS_KEY
-             valueFrom:
-               secretKeyRef:
-                 name: minio-s3-credentials
-                 key: AWS_SECRET_ACCESS_KEY
-   ```
-
-### Example: Enable S3 in spark-pi.yaml
+### Quick Test
 
 ```bash
-# Edit the example
-vim kubernetes/apps/spark/examples/spark-pi.yaml
+# From nix-cluster directory
+cd kubernetes/apps/spark
 
-# Change image line
-spark.kubernetes.container.image: "spark-s3:3.5.3"
+# Render manifests with MinIO credentials (substitutes __MINIO_BUCKET__ and __MINIO_ENDPOINT__)
+nix run .#render-spark > /tmp/spark-manifests.yaml
+kubectl apply -f /tmp/spark-manifests.yaml
 
-# Uncomment all S3-related lines (marked with comments)
+# Or directly render and substitute example manifests
+sed -e 's|__MINIO_BUCKET__|spark-homelab|g' \
+    -e 's|__MINIO_ENDPOINT__|minio.hhlab.home.arpa|g' \
+    examples/spark-pi.yaml | kubectl apply -f -
 
-# Apply
-kubectl apply -f kubernetes/apps/spark/examples/spark-pi.yaml
+# Monitor job
+kubectl get sparkapplications -n spark -w
+
+# Check logs
+kubectl logs -n spark -l spark-role=driver -f
+```
+
+### SparkApplication Configuration Template
+
+For new SparkApplications, use this configuration:
+
+```yaml
+apiVersion: spark.apache.org/v1
+kind: SparkApplication
+metadata:
+  name: my-spark-job
+  namespace: spark
+spec:
+  sparkConf:
+    # Use custom image with S3 JARs
+    spark.kubernetes.container.image: "spark-s3:3.5.3"
+
+    # Enable S3 event logging
+    spark.eventLog.enabled: "true"
+    spark.eventLog.dir: "s3a://spark-homelab/spark-events"
+    spark.hadoop.fs.s3a.endpoint: "http://minio.hhlab.home.arpa:9000"
+    spark.hadoop.fs.s3a.path.style.access: "true"
+    spark.hadoop.fs.s3a.impl: "org.apache.hadoop.fs.s3a.S3AFileSystem"
+
+  driverSpec:
+    podTemplateSpec:
+      spec:
+        containers:
+        - name: spark-kubernetes-driver
+          # S3 credentials from secret
+          env:
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: minio-s3-credentials
+                key: AWS_ACCESS_KEY_ID
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: minio-s3-credentials
+                key: AWS_SECRET_ACCESS_KEY
+
+  executorSpec:
+    podTemplateSpec:
+      spec:
+        containers:
+        - name: spark-kubernetes-executor
+          # Same credentials for executors
+          env:
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: minio-s3-credentials
+                key: AWS_ACCESS_KEY_ID
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: minio-s3-credentials
+                key: AWS_SECRET_ACCESS_KEY
 ```
 
 ## Verification
@@ -150,6 +221,54 @@ The hadoop-aws version must match the Hadoop version bundled with Spark:
 - Check with: `docker run apache/spark:3.5.3 hadoop version`
 
 ## Troubleshooting
+
+### "exec /opt/entrypoint.sh: exec format error"
+
+**Symptoms**: Driver pod crashes immediately with exit code 1, logs show "exec format error"
+
+**Cause**: Image was built for wrong architecture (AMD64 instead of ARM64)
+
+**Solution**:
+1. Remove the incorrect image from cluster nodes:
+   ```bash
+   for node in cluster-pi-{01..05}; do
+     ssh eduardo@${node}.hhlab.home.arpa "sudo k3s ctr images rm docker.io/library/spark-s3:3.5.3"
+   done
+   ```
+
+2. Rebuild for ARM64 using buildx:
+   ```bash
+   ./build-and-deploy.sh
+   ```
+
+3. Verify architecture:
+   ```bash
+   ssh eduardo@cluster-pi-01.hhlab.home.arpa \
+     "sudo k3s crictl inspecti docker.io/library/spark-s3:3.5.3 | grep architecture"
+   # Should show: "architecture": "arm64"
+   ```
+
+### Docker Buildx Not Available
+
+**Symptoms**: `docker buildx version` fails or command not found
+
+**Solution**:
+- **Docker Desktop**: Buildx is included by default (macOS, Windows)
+- **Docker Engine on Linux**: Install buildx plugin:
+  ```bash
+  # Check if buildx is available
+  docker buildx version
+
+  # If not, install it (varies by distro)
+  # For Ubuntu/Debian with Docker from apt:
+  apt-get install docker-buildx-plugin
+
+  # Or download manually:
+  mkdir -p ~/.docker/cli-plugins
+  curl -SL https://github.com/docker/buildx/releases/download/v0.12.0/buildx-v0.12.0.linux-amd64 \
+    -o ~/.docker/cli-plugins/docker-buildx
+  chmod +x ~/.docker/cli-plugins/docker-buildx
+  ```
 
 ### Build Fails - Cannot Download JARs
 

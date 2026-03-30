@@ -2,14 +2,36 @@
 set -euo pipefail
 
 # Build and deploy custom Spark image with S3 support to k3s cluster
+# Builds ARM64 image for Raspberry Pi cluster using docker buildx
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 IMAGE_NAME="spark-s3"
 IMAGE_TAG="3.5.3"
 FULL_IMAGE="${IMAGE_NAME}:${IMAGE_TAG}"
+PLATFORM="linux/arm64"
 
-echo "==> Building custom Spark image with S3 support..."
-docker build -t "${FULL_IMAGE}" "${SCRIPT_DIR}"
+echo "==> Checking docker buildx availability..."
+if ! docker buildx version &>/dev/null; then
+    echo "ERROR: docker buildx is not available"
+    echo "Please install Docker with buildx support"
+    exit 1
+fi
+
+echo "==> Setting up QEMU emulation for ARM64..."
+docker run --privileged --rm tonistiigi/binfmt --install arm64 >/dev/null 2>&1 || true
+
+echo "==> Creating/using multiarch builder..."
+if ! docker buildx inspect multiarch &>/dev/null; then
+    docker buildx create --name multiarch --driver docker-container --bootstrap
+fi
+
+echo "==> Building custom Spark image with S3 support for ${PLATFORM}..."
+docker buildx build \
+    --builder=multiarch \
+    --platform "${PLATFORM}" \
+    --load \
+    -t "${FULL_IMAGE}" \
+    "${SCRIPT_DIR}"
 
 echo ""
 echo "==> Verifying image..."
@@ -44,12 +66,15 @@ ssh eduardo@cluster-pi-01.hhlab.home.arpa "sudo k3s crictl images | grep '${IMAG
 echo ""
 echo "==> Done!"
 echo ""
-echo "Next steps:"
-echo "1. Update SparkApplication manifests to use: ${FULL_IMAGE}"
-echo "2. Uncomment S3 event logging configuration in sparkConf"
-echo "3. Uncomment AWS credentials in driverSpec/executorSpec"
+echo "Image ${FULL_IMAGE} built for ${PLATFORM} and deployed to all cluster nodes."
 echo ""
-echo "Example sparkConf:"
-echo "  spark.kubernetes.container.image: \"${FULL_IMAGE}\""
-echo "  spark.eventLog.enabled: \"true\""
-echo "  spark.eventLog.dir: \"s3a://spark-homelab/spark-events\""
+echo "The image includes:"
+echo "  - hadoop-aws-3.3.4.jar"
+echo "  - aws-java-sdk-bundle-1.12.262.jar"
+echo ""
+echo "SparkApplication manifests in kubernetes/apps/spark/examples/ are already configured"
+echo "to use this image with S3 event logging enabled."
+echo ""
+echo "To test:"
+echo "  kubectl apply -f kubernetes/apps/spark/examples/spark-pi.yaml"
+echo "  kubectl get sparkapplications -n spark -w"
