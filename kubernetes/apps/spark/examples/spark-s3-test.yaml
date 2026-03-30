@@ -9,7 +9,7 @@ spec:
   runtimeVersions:
     sparkVersion: "3.5.3"
   sparkConf:
-    spark.kubernetes.container.image: "apache/spark:3.5.3"
+    spark.kubernetes.container.image: "spark-s3:3.5.3"
     spark.kubernetes.driver.request.cores: "1"
     spark.kubernetes.executor.request.cores: "1"
     spark.driver.memory: "512m"
@@ -17,13 +17,12 @@ spec:
     spark.executor.instances: "2"
     spark.kubernetes.driver.podTemplateContainerName: "spark-kubernetes-driver"
     spark.kubernetes.executor.podTemplateContainerName: "spark-kubernetes-executor"
-    # Note: S3 event logging requires hadoop-aws JARs not included in base image
-    # Uncomment these lines once hadoop-aws dependencies are available
-    # spark.eventLog.enabled: "true"
-    # spark.eventLog.dir: "s3a://__MINIO_BUCKET__/spark-events"
-    # spark.hadoop.fs.s3a.endpoint: "http://__MINIO_ENDPOINT__:9000"
-    # spark.hadoop.fs.s3a.path.style.access: "true"
-    # spark.hadoop.fs.s3a.impl: "org.apache.hadoop.fs.s3a.S3AFileSystem"
+    # S3 event logging with hadoop-aws JARs (spark-s3:3.5.3 image)
+    spark.eventLog.enabled: "true"
+    spark.eventLog.dir: "s3a://__MINIO_BUCKET__/spark-events"
+    spark.hadoop.fs.s3a.endpoint: "http://__MINIO_ENDPOINT__:9000"
+    spark.hadoop.fs.s3a.path.style.access: "true"
+    spark.hadoop.fs.s3a.impl: "org.apache.hadoop.fs.s3a.S3AFileSystem"
   driverSpec:
     podTemplateSpec:
       metadata:
@@ -43,18 +42,18 @@ spec:
             limits:
               cpu: "1"
               memory: "512Mi"
-          # Uncomment for S3 event logging
-          # env:
-          # - name: AWS_ACCESS_KEY_ID
-          #   valueFrom:
-          #     secretKeyRef:
-          #       name: minio-s3-credentials
-          #       key: AWS_ACCESS_KEY_ID
-          # - name: AWS_SECRET_ACCESS_KEY
-          #   valueFrom:
-          #     secretKeyRef:
-          #       name: minio-s3-credentials
-          #       key: AWS_SECRET_ACCESS_KEY
+          # S3 event logging credentials
+          env:
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: minio-s3-credentials
+                key: AWS_ACCESS_KEY_ID
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: minio-s3-credentials
+                key: AWS_SECRET_ACCESS_KEY
   executorSpec:
     podTemplateSpec:
       metadata:
@@ -73,15 +72,15 @@ spec:
             limits:
               cpu: "1"
               memory: "512Mi"
-          # Uncomment for S3 event logging
-          # env:
-          # - name: AWS_ACCESS_KEY_ID
-          #   valueFrom:
-          #     secretKeyRef:
-          #       name: minio-s3-credentials
-          #       key: AWS_ACCESS_KEY_ID
-          # - name: AWS_SECRET_ACCESS_KEY
-          #   valueFrom:
-          #     secretKeyRef:
-          #       name: minio-s3-credentials
-          #       key: AWS_SECRET_ACCESS_KEY
+          # S3 event logging credentials
+          env:
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: minio-s3-credentials
+                key: AWS_ACCESS_KEY_ID
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: minio-s3-credentials
+                key: AWS_SECRET_ACCESS_KEY
