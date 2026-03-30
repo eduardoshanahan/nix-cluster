@@ -16,8 +16,13 @@ This directory contains the MinIO S3 credentials used by Spark jobs and the Hist
 Before deploying Spark, ensure the following on your MinIO instance:
 
 1. **Create Bucket**: Create a bucket named `spark-homelab`
-2. **Create Access Key**: Generate a dedicated access key for Spark with read/write permissions to the bucket
-3. **Update nix-cluster-private**: Add the credentials to the private configuration
+2. **Create Event Logs Directory**: **CRITICAL** - Create the `spark-events` directory inside the bucket:
+   ```bash
+   mc mb homelab-minio/spark-homelab/spark-events
+   ```
+   Without this directory, the History Server will crash on startup!
+3. **Create Access Key**: Generate a dedicated access key for Spark with read/write permissions to the bucket
+4. **Update nix-cluster-private**: Add the credentials to the private configuration
 
 ## Updating Credentials
 

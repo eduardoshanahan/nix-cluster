@@ -110,6 +110,9 @@ From the nix-cluster repository root:
 # Validate private config
 nix run .#validate-private-config
 
+# IMPORTANT: Apply CRDs first (required before operator starts)
+kubectl apply --server-side=true -f kubernetes/apps/spark/spark-operator/charts/spark-kubernetes-operator/crds/
+
 # Render manifests with templated values
 nix run .#render-spark > /tmp/spark-manifests.yaml
 
@@ -119,6 +122,8 @@ kubectl apply --dry-run=client -f /tmp/spark-manifests.yaml
 # Deploy to cluster
 nix run .#render-spark | kubectl apply -f -
 ```
+
+**Note**: CRDs must be applied using `--server-side=true` because they exceed the annotation size limit for client-side apply.
 
 ### Verify Deployment
 
@@ -253,7 +258,18 @@ kubectl describe nodes | grep -A5 "Allocated resources"
 
 ### History Server Shows No Jobs
 
-Check S3 connectivity:
+**Expected**: If no Spark jobs have been submitted yet, or if jobs ran without S3 event logging enabled.
+
+**Current Limitation**: The base apache/spark:3.5.3 image does not include hadoop-aws JARs required for S3 event logging. Jobs run successfully but cannot write event logs to S3. The History Server works because it has an init container that downloads the required JARs.
+
+**To enable S3 event logging**:
+1. Build custom Spark image with hadoop-aws-3.3.4.jar and aws-java-sdk-bundle-1.12.262.jar
+2. Update SparkApplication specs to use custom image
+3. Enable S3 configuration in sparkConf
+
+**Temporary workaround**: Run jobs without S3 event logging (works perfectly). Jobs will complete successfully but won't appear in History Server.
+
+Check S3 connectivity (if logging is enabled):
 ```bash
 kubectl logs -n spark deployment/spark-history-server | grep s3a
 ```
@@ -269,8 +285,6 @@ Verify bucket exists:
 kubectl run -n spark -it --rm s3-test --image=amazon/aws-cli --restart=Never -- \
   s3 --endpoint-url=http://minio.hhlab.home.arpa:9000 ls s3://spark-homelab/
 ```
-
-**Solution**: Verify MinIO credentials in secret, check bucket exists, ensure network connectivity.
 
 ### Executors Not Scheduling
 

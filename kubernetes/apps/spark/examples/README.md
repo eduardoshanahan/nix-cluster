@@ -2,6 +2,10 @@
 
 This directory contains example SparkApplication manifests for testing and learning.
 
+**API Version**: These examples use `spark.apache.org/v1` (Apache Spark Kubernetes Operator 0.8.0)
+
+**Important**: S3 event logging is currently commented out in examples because the base Spark image lacks required hadoop-aws JARs. Jobs run successfully without S3 logging.
+
 ## Available Examples
 
 ### spark-pi.yaml
@@ -33,20 +37,77 @@ Driver logs should show: `Pi is roughly 3.14...`
 
 ### spark-s3-test.yaml
 
-Python-based Pi calculation that tests S3 integration. This validates that event logging to MinIO S3 works correctly.
+Python-based Pi calculation example.
 
 **Submit:**
 ```bash
 kubectl apply -f kubernetes/apps/spark/examples/spark-s3-test.yaml
 ```
 
-**Verify S3 Event Logs:**
-```bash
-# Check MinIO bucket for event logs
-kubectl run -n spark -it --rm s3-test --image=amazon/aws-cli --restart=Never -- \
-  s3 --endpoint-url=http://__MINIO_ENDPOINT__:9000 \
-  ls s3://__MINIO_BUCKET__/spark-events/
+**Note on S3 Event Logging**: S3 event logging is currently disabled in examples (commented out) because the apache/spark:3.5.3 image does not include hadoop-aws JARs. To enable S3 logging:
+1. Build custom Spark image with hadoop-aws-3.3.4.jar and aws-java-sdk-bundle-1.12.262.jar
+2. Uncomment S3 configuration in sparkConf
+3. Uncomment AWS credentials in driverSpec/executorSpec
+
+## API Version and Schema
+
+These examples use the Apache Spark Kubernetes Operator v1 API (`spark.apache.org/v1`).
+
+### Key Schema Differences from v1beta2
+
+If migrating from older examples or documentation using `sparkoperator.k8s.io/v1beta2`:
+
+| v1beta2 (Old) | v1 (New) |
+|---------------|----------|
+| `type: Scala` | `deploymentMode: ClusterMode` |
+| `mode: cluster` | `deploymentMode: ClusterMode` |
+| `image: "..."` | `sparkConf.spark.kubernetes.container.image: "..."` |
+| `sparkVersion: "3.5.3"` | `runtimeVersions.sparkVersion: "3.5.3"` |
+| `mainApplicationFile: "..."` | `jars: "..."` (for JVM) or `pyFiles: "..."` (for Python) |
+| `driver: { cores: 1, memory: "512m" }` | `driverSpec.podTemplateSpec.spec.containers[].resources` |
+| `executor: { cores: 1, instances: 2 }` | `sparkConf.spark.executor.instances: "2"` + `executorSpec.podTemplateSpec` |
+
+### v1 Structure
+
+```yaml
+apiVersion: spark.apache.org/v1
+kind: SparkApplication
+spec:
+  deploymentMode: ClusterMode
+  mainClass: org.apache.spark.examples.SparkPi
+  jars: "local:///path/to/jar"
+  runtimeVersions:
+    sparkVersion: "3.5.3"
+  sparkConf:
+    spark.kubernetes.container.image: "apache/spark:3.5.3"
+    spark.driver.memory: "512m"
+    spark.executor.memory: "512m"
+    spark.executor.instances: "2"
+  driverSpec:
+    podTemplateSpec:
+      spec:
+        serviceAccountName: spark-operator
+        containers:
+        - name: spark-kubernetes-driver
+          resources:
+            requests:
+              cpu: "1"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "512Mi"
+  executorSpec:
+    podTemplateSpec:
+      spec:
+        containers:
+        - name: spark-kubernetes-executor
+          resources:
+            requests:
+              cpu: "1"
+              memory: "512Mi"
 ```
+
+The pod template specs follow standard Kubernetes pod specifications.
 
 ## Job Lifecycle
 
