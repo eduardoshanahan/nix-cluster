@@ -43,7 +43,7 @@ The cluster consists of 5 Raspberry Pi 4 nodes:
 
 | Hostname | FQDN | IP Address | Role |
 |----------|------|------------|------|
-| cluster-node-01 | cluster-node-01.internal.example | 192.0.2.31 | Control Plane (bootstrap) |
+| cluster-node-01 | cluster-node-01.internal.example | 192.0.2.10 | Control Plane (bootstrap) |
 | cluster-node-02 | cluster-node-02.internal.example | 192.0.2.10 | Control Plane |
 | cluster-node-03 | cluster-node-03.internal.example | 192.0.2.10 | Control Plane |
 | cluster-node-04 | cluster-node-04.internal.example | 192.0.2.10 | Worker |
