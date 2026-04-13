@@ -146,8 +146,9 @@ At the start of a session in this repo:
 4. inspect `git status --short --branch` before making changes
 
 Do not skip Git hooks during normal operations.
-Do not use `--no-verify` unless the user explicitly asks for it or there is a
-documented emergency recovery reason.
+Do not use `--no-verify` to work around missing local tools. If hooks or commit
+tooling fail because something is unavailable, enter `nix develop` first and
+rerun the normal workflow from there.
 
 If you need to commit, prefer this flow:
 
