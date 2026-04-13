@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wikijs
+  namespace: wikijs
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - __WIKIJS_HOST__
+      secretName: __INGRESS_TLS_SECRET_NAME__
+  rules:
+    - host: __WIKIJS_HOST__
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: wikijs
+                port:
+                  number: 3000

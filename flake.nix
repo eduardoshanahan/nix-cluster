@@ -441,6 +441,7 @@
           runtimeInputs = [
             pkgs.findutils
             pkgs.gnused
+            pkgs.jq
             pkgs.kubectl
             pkgs.kubernetes-helm
             pkgs.nix
@@ -504,6 +505,89 @@
             exec kubectl kustomize --enable-helm "$render_root/apps/spark"
           '';
         };
+        renderWikiJS = pkgs.writeShellApplication {
+          name = "render-wikijs";
+          runtimeInputs = [
+            pkgs.findutils
+            pkgs.gnused
+            pkgs.kubectl
+            pkgs.kubernetes-helm
+            pkgs.nix
+            validatePrivateConfig
+          ];
+          text = ''
+            set -euo pipefail
+
+            private_flake_dir="''${NIX_CLUSTER_PRIVATE_FLAKE:-$PWD/../nix-cluster-private}"
+            private_override_args=(--no-write-lock-file --override-input private "path:$private_flake_dir")
+            flake_ref="path:$PWD#nixosConfigurations.cluster-node-01"
+
+            validate-private-config --quiet cluster-node-01
+
+            domain="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.domain" --raw)"
+            ingress_tls_secret_name="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.kubernetes.ingressTlsSecretName" --raw)"
+            postgres_host="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.wikijs.postgresHost" --raw)"
+            postgres_port="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.wikijs.postgresPort" --json | jq -r '.')"
+            postgres_database="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.wikijs.postgresDatabase" --raw)"
+            postgres_user="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.wikijs.postgresUser" --raw)"
+            postgres_password="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.wikijs.postgresPassword" --raw)"
+            minio_endpoint="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.wikijs.minioEndpoint" --raw)"
+            minio_port="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.wikijs.minioPort" --json | jq -r '.')"
+            minio_bucket="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.wikijs.minioBucket" --raw)"
+            minio_access_key="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.wikijs.minioAccessKey" --raw)"
+            minio_secret_key="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.wikijs.minioSecretKey" --raw)"
+
+            if [ "$ingress_tls_secret_name" = "replace-with-private-tls-secret" ]; then
+              echo "render failed: set homelab.kubernetes.ingressTlsSecretName in nix-cluster-private" >&2
+              exit 1
+            fi
+
+            if [ "$postgres_password" = "CHANGE_ME_WIKIJS_DB_PASSWORD" ]; then
+              echo "render failed: set homelab.wikijs.postgresPassword in nix-cluster-private" >&2
+              exit 1
+            fi
+
+            if [ "$minio_access_key" = "CHANGE_ME_WIKIJS_MINIO_ACCESS_KEY" ]; then
+              echo "render failed: set homelab.wikijs.minioAccessKey in nix-cluster-private" >&2
+              exit 1
+            fi
+
+            if [ "$minio_secret_key" = "CHANGE_ME_WIKIJS_MINIO_SECRET_KEY" ]; then
+              echo "render failed: set homelab.wikijs.minioSecretKey in nix-cluster-private" >&2
+              exit 1
+            fi
+
+            tmpdir="$(mktemp -d)"
+            trap 'rm -rf "$tmpdir"' EXIT
+            render_root="$tmpdir/render"
+
+            cp -R "$PWD/kubernetes" "$render_root"
+
+            wikijs_host="wiki.$domain"
+            namespace_label_prefix="homelab.$domain"
+
+            while IFS= read -r -d $'\0' file; do
+              sed -i \
+                -e "s|__WIKIJS_HOST__|$wikijs_host|g" \
+                -e "s|__INGRESS_TLS_SECRET_NAME__|$ingress_tls_secret_name|g" \
+                -e "s|__HOMELAB_NAMESPACE_LABEL_PREFIX__|$namespace_label_prefix|g" \
+                -e "s|__DOMAIN__|$domain|g" \
+                -e "s|__WIKIJS_POSTGRES_HOST__|$postgres_host|g" \
+                -e "s|__WIKIJS_POSTGRES_PORT__|$postgres_port|g" \
+                -e "s|__WIKIJS_POSTGRES_DATABASE__|$postgres_database|g" \
+                -e "s|__WIKIJS_POSTGRES_USER__|$postgres_user|g" \
+                -e "s|__WIKIJS_POSTGRES_PASSWORD__|$postgres_password|g" \
+                -e "s|__WIKIJS_MINIO_ENDPOINT__|$minio_endpoint|g" \
+                -e "s|__WIKIJS_MINIO_PORT__|$minio_port|g" \
+                -e "s|__WIKIJS_MINIO_BUCKET__|$minio_bucket|g" \
+                -e "s|__WIKIJS_MINIO_ACCESS_KEY__|$minio_access_key|g" \
+                -e "s|__WIKIJS_MINIO_SECRET_KEY__|$minio_secret_key|g" \
+                "$file"
+            done < <(find "$render_root" -type f \( -name '*.yaml' -o -name '*.yml' \) -print0)
+
+            exec kubectl kustomize --enable-helm "$render_root/apps/wikijs"
+          '';
+        };
       in
       {
         packages.bootstrap-sd-image = bootstrapImage;
@@ -514,6 +598,7 @@
         packages.render-observability = renderObservability;
         packages.render-headlamp = renderHeadlamp;
         packages.render-spark = renderSpark;
+        packages.render-wikijs = renderWikiJS;
 
         apps.validate-private-config = {
           type = "app";
@@ -548,6 +633,11 @@
         apps.render-spark = {
           type = "app";
           program = "${renderSpark}/bin/render-spark";
+        };
+
+        apps.render-wikijs = {
+          type = "app";
+          program = "${renderWikiJS}/bin/render-wikijs";
         };
 
         devShells.default = pkgs.mkShell {

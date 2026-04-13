@@ -9,6 +9,11 @@ Examples include:
 - app-specific databases that intentionally live inside the cluster
 - app-level ingress, jobs, and supporting manifests tied to one service
 
+Current app workload areas include:
+
+- `spark/` for the Spark operator, history server, and examples
+- `wikijs/` for the first user-facing knowledge base workload on the cluster
+
 ## Boundary
 
 Keep shared cluster platform services out of this directory. Those belong in

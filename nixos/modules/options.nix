@@ -109,6 +109,68 @@
         };
       };
 
+      wikijs = {
+        postgresHost = lib.mkOption {
+          type = lib.types.str;
+          default = "postgres.internal.example";
+          description = "Shared PostgreSQL hostname used by Wiki.js.";
+        };
+
+        postgresPort = lib.mkOption {
+          type = lib.types.port;
+          default = 5433;
+          description = "Shared PostgreSQL port used by Wiki.js.";
+        };
+
+        postgresDatabase = lib.mkOption {
+          type = lib.types.str;
+          default = "wikijs";
+          description = "PostgreSQL database name for Wiki.js.";
+        };
+
+        postgresUser = lib.mkOption {
+          type = lib.types.str;
+          default = "wikijs";
+          description = "PostgreSQL user for Wiki.js.";
+        };
+
+        postgresPassword = lib.mkOption {
+          type = lib.types.str;
+          default = "CHANGE_ME_WIKIJS_DB_PASSWORD";
+          description = "PostgreSQL password for Wiki.js (store in private config).";
+        };
+
+        minioEndpoint = lib.mkOption {
+          type = lib.types.str;
+          default = "minio.internal.example";
+          description = "MinIO S3 endpoint hostname for Wiki.js uploaded assets.";
+        };
+
+        minioPort = lib.mkOption {
+          type = lib.types.port;
+          default = 443;
+          description = "MinIO S3 API port for Wiki.js uploaded assets.";
+        };
+
+        minioBucket = lib.mkOption {
+          type = lib.types.str;
+          default = "wikijs";
+          description = "MinIO S3 bucket name intended for Wiki.js uploaded assets.";
+        };
+
+        minioAccessKey = lib.mkOption {
+          type = lib.types.str;
+          default = "CHANGE_ME_WIKIJS_MINIO_ACCESS_KEY";
+          description = "MinIO S3 access key for Wiki.js (store in private config).";
+        };
+
+        minioSecretKey = lib.mkOption {
+          type = lib.types.str;
+          default = "CHANGE_ME_WIKIJS_MINIO_SECRET_KEY";
+          description = "MinIO S3 secret key for Wiki.js (store in private config).";
+        };
+      };
+
       cluster = {
         enable = lib.mkOption {
           type = lib.types.bool;
