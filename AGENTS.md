@@ -60,6 +60,16 @@ Do not edit those repositories without explicit user authorization.
 When changes in `nix-cluster` depend on those repos, keep the boundary clear in
 your notes and avoid silently implementing cross-repo assumptions.
 
+## Public Vs Private References
+
+Public repos in this workspace may intentionally use anonymized placeholders
+such as `*.internal.example` for Git remotes, service URLs, hostnames, and
+other environment-specific identifiers.
+
+Treat those values as sanitized public-side references, not as the canonical
+live endpoints. Check the matching private sibling repo for the real values
+before assuming a placeholder address is broken or misconfigured.
+
 ## Operational Model To Respect
 
 This repo intentionally moved away from fragile per-node SD-card images.
