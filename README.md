@@ -65,6 +65,11 @@ The repo has an explicit preflight check for the private input:
 
 - `nix run "path:$PWD#validate-private-config" -- cluster-node-01`
 
+The repo also has a session grounding helper that validates core docs and KB
+index availability:
+
+- `nix run .#session-preflight`
+
 Use that helper before deploys, validations, and Kubernetes manifest renders.
 
 By default the helper scripts look for `../nix-cluster-private`.

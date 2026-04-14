@@ -18,6 +18,7 @@ Read in this order before making non-trivial changes:
 3. `docs/RESTART_PLAN.md`
 4. `docs/LESSONS_LEARNED.md`
 5. the most recent relevant status or handoff doc in `docs/`
+6. related records in `../hhlab-wiki` (decisions, anti-patterns, architecture)
 
 If the task touches Kubernetes workloads, also read:
 
@@ -135,6 +136,7 @@ Try to keep host files thin and shared behavior centralized.
 
 Prefer the repo helpers in `flake.nix` over ad hoc commands when they fit:
 
+- `nix run .#session-preflight`
 - `nix run "path:$PWD#validate-private-config" -- <node>`
 - `nix run .#validate-cluster-node -- <node>`
 - `nix run .#deploy-cluster-node -- <node> <target-host>`
@@ -151,6 +153,9 @@ For deploy work, preserve the helper-driven model around:
 
 Do not replace the helper flow with undocumented one-off deploy commands unless
 the task is specifically about recovery or debugging.
+
+For session grounding, run `nix run .#session-preflight` and review the linked
+KB records before implementing meaningful cluster changes.
 
 ## Git Workflow
 
