@@ -1,0 +1,31 @@
+# Kafbat Kafka UI — topic browser, consumer-group lag, schema registry view.
+# Exposed via a separate ingress.yaml at kafka-ui.<domain>.
+
+yamlApplicationConfig:
+  kafka:
+    clusters:
+      - name: homelab
+        bootstrapServers: "kafka-kafka-bootstrap.kafka.svc.cluster.local:9092"
+        schemaRegistry: "http://schema-registry.kafka.svc.cluster.local:8081"
+  auth:
+    type: disabled
+  management:
+    health:
+      ldap:
+        enabled: false
+
+service:
+  type: ClusterIP
+  port: 8080
+
+# Ingress is managed by ingress.yaml to follow the repo pattern
+ingress:
+  enabled: false
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"

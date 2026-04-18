@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kafka
+  labels:
+    app.kubernetes.io/part-of: kafka
+    homelab.domain: __DOMAIN__
+    app.kubernetes.io/managed-by: kustomize

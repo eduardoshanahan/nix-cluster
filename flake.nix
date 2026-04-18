@@ -657,6 +657,54 @@ EOF
             exec kubectl kustomize --enable-helm "$render_root/apps/wikijs"
           '';
         };
+        renderKafka = pkgs.writeShellApplication {
+          name = "render-kafka";
+          runtimeInputs = [
+            pkgs.findutils
+            pkgs.gnused
+            pkgs.kubectl
+            pkgs.kubernetes-helm
+            pkgs.nix
+            validatePrivateConfig
+          ];
+          text = ''
+            set -euo pipefail
+
+            private_flake_dir="''${NIX_CLUSTER_PRIVATE_FLAKE:-$PWD/../nix-cluster-private}"
+            private_override_args=(--no-write-lock-file --override-input private "path:$private_flake_dir")
+            flake_ref="path:$PWD#nixosConfigurations.cluster-node-01"
+
+            validate-private-config --quiet cluster-node-01
+
+            domain="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.domain" --raw)"
+            ingress_tls_secret_name="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.kubernetes.ingressTlsSecretName" --raw)"
+
+            if [ "$ingress_tls_secret_name" = "replace-with-private-tls-secret" ]; then
+              echo "render failed: set homelab.kubernetes.ingressTlsSecretName in nix-cluster-private" >&2
+              exit 1
+            fi
+
+            tmpdir="$(mktemp -d)"
+            trap 'rm -rf "$tmpdir"' EXIT
+            render_root="$tmpdir/render"
+
+            cp -R "$PWD/kubernetes" "$render_root"
+
+            kafka_ui_host="kafka-ui.$domain"
+            namespace_label_prefix="homelab.$domain"
+
+            while IFS= read -r -d $'\0' file; do
+              sed -i \
+                -e "s|__KAFKA_UI_HOST__|$kafka_ui_host|g" \
+                -e "s|__INGRESS_TLS_SECRET_NAME__|$ingress_tls_secret_name|g" \
+                -e "s|__HOMELAB_NAMESPACE_LABEL_PREFIX__|$namespace_label_prefix|g" \
+                -e "s|__DOMAIN__|$domain|g" \
+                "$file"
+            done < <(find "$render_root" -type f \( -name '*.yaml' -o -name '*.yml' \) -print0)
+
+            exec kubectl kustomize --enable-helm "$render_root/apps/kafka"
+          '';
+        };
       in
       {
         packages.bootstrap-sd-image = bootstrapImage;
@@ -669,6 +717,7 @@ EOF
         packages.render-headlamp = renderHeadlamp;
         packages.render-spark = renderSpark;
         packages.render-wikijs = renderWikiJS;
+        packages.render-kafka = renderKafka;
 
         apps.validate-private-config = {
           type = "app";
@@ -713,6 +762,11 @@ EOF
         apps.render-wikijs = {
           type = "app";
           program = "${renderWikiJS}/bin/render-wikijs";
+        };
+
+        apps.render-kafka = {
+          type = "app";
+          program = "${renderKafka}/bin/render-kafka";
         };
 
         devShells.default = pkgs.mkShell {

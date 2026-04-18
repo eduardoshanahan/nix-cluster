@@ -1,0 +1,4 @@
+# Restrict the operator to only watch the kafka namespace
+watchAnyNamespace: false
+watchNamespaces:
+  - kafka

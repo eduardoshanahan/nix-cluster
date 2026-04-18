@@ -11,6 +11,7 @@ Examples include:
 
 Current app workload areas include:
 
+- `kafka/` for a 3-broker Kafka cluster (KRaft), Schema Registry, and Kafka UI — for CCDAK certification study
 - `spark/` for the Spark operator, history server, and examples
 - `wikijs/` for the first user-facing knowledge base workload on the cluster
 
