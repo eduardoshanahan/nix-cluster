@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-jupyter
+  namespace: spark
+  labels:
+    app: spark-jupyter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spark-jupyter
+  template:
+    metadata:
+      labels:
+        app: spark-jupyter
+    spec:
+      serviceAccountName: spark-jupyter
+      nodeSelector:
+        kubernetes.io/arch: arm64
+      containers:
+      - name: jupyter
+        image: spark-jupyter:3.5.3
+        imagePullPolicy: IfNotPresent
+        ports:
+          - name: http
+            containerPort: 8888
+            protocol: TCP
+        env:
+          # spark user (UID 185) has no home dir — point Jupyter to writable paths
+          - name: HOME
+            value: /tmp/spark-home
+          - name: JUPYTER_RUNTIME_DIR
+            value: /tmp/jupyter-runtime
+          # Injected as spark.driver.host in notebook SparkSession (see README)
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+        envFrom:
+          # Provides AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY for S3 event logging
+          - secretRef:
+              name: minio-s3-credentials
+          # Provides JUPYTER_TOKEN for browser authentication
+          - secretRef:
+              name: spark-jupyter-token
+        volumeMounts:
+          - name: notebooks
+            mountPath: /opt/notebooks
+          - name: spark-conf
+            mountPath: /opt/spark/conf/spark-defaults.conf
+            subPath: spark-defaults.conf
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+        livenessProbe:
+          httpGet:
+            path: /api
+            port: 8888
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /api
+            port: 8888
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+      volumes:
+        - name: notebooks
+          persistentVolumeClaim:
+            claimName: spark-jupyter-notebooks
+        - name: spark-conf
+          configMap:
+            name: spark-jupyter-conf

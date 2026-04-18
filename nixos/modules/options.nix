@@ -107,6 +107,12 @@
           default = "CHANGE_ME_SECRET_KEY";
           description = "MinIO S3 secret key for Spark (store in private config).";
         };
+
+        jupyterToken = lib.mkOption {
+          type = lib.types.str;
+          default = "CHANGE_ME_JUPYTER_TOKEN";
+          description = "JupyterLab authentication token (store in private config).";
+        };
       };
 
       wikijs = {

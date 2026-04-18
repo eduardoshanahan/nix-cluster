@@ -7,3 +7,4 @@ resources:
   - minio-integration/secret.yaml
   - spark-operator
   - spark-history-server
+  - jupyter

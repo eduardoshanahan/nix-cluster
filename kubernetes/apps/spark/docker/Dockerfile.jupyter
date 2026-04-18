@@ -1,0 +1,46 @@
+# JupyterLab image with PySpark for interactive Spark study
+# Built from upstream apache/spark:3.5.3 (same base as spark-s3) to avoid
+# depending on a locally-tagged image that buildx cannot resolve.
+FROM apache/spark:3.5.3
+
+USER root
+
+# S3 support — same JARs as spark-s3:3.5.3
+RUN curl -fsSL -o ${SPARK_HOME}/jars/hadoop-aws-3.3.4.jar \
+        https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar && \
+    curl -fsSL -o ${SPARK_HOME}/jars/aws-java-sdk-bundle-1.12.262.jar \
+        https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar && \
+    chmod 644 \
+        ${SPARK_HOME}/jars/hadoop-aws-3.3.4.jar \
+        ${SPARK_HOME}/jars/aws-java-sdk-bundle-1.12.262.jar
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip3 install --upgrade pip \
+    && pip3 install --no-cache-dir \
+        jupyterlab \
+        pandas \
+        matplotlib \
+        numpy \
+    && rm -rf /root/.cache/pip
+
+ENV PYTHONPATH="${SPARK_HOME}/python:${SPARK_HOME}/python/lib/py4j-0.10.9.7-src.zip"
+
+# Notebooks directory — mount a PVC here for persistence
+RUN mkdir -p /opt/notebooks && chown 185:185 /opt/notebooks
+
+USER 185
+
+EXPOSE 8888
+
+# JUPYTER_TOKEN is injected via Kubernetes secret at runtime
+CMD ["python3", "-m", "jupyterlab", \
+     "--ip=0.0.0.0", \
+     "--port=8888", \
+     "--no-browser", \
+     "--notebook-dir=/opt/notebooks"]
+
+LABEL org.opencontainers.image.title="Apache Spark + JupyterLab"
+LABEL org.opencontainers.image.description="Apache Spark 3.5.3 with JupyterLab for interactive PySpark study"
+LABEL org.opencontainers.image.version="3.5.3-jupyter-py38"

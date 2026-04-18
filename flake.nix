@@ -531,6 +531,7 @@ EOF
             minio_bucket="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.spark.minioBucket" --raw)"
             minio_access_key="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.spark.minioAccessKey" --raw)"
             minio_secret_key="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.spark.minioSecretKey" --raw)"
+            jupyter_token="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.spark.jupyterToken" --raw)"
 
             if [ "$ingress_tls_secret_name" = "replace-with-private-tls-secret" ]; then
               echo "render failed: set homelab.kubernetes.ingressTlsSecretName in nix-cluster-private" >&2
@@ -547,6 +548,11 @@ EOF
               exit 1
             fi
 
+            if [ "$jupyter_token" = "CHANGE_ME_JUPYTER_TOKEN" ]; then
+              echo "render failed: set homelab.spark.jupyterToken in nix-cluster-private" >&2
+              exit 1
+            fi
+
             tmpdir="$(mktemp -d)"
             trap 'rm -rf "$tmpdir"' EXIT
             render_root="$tmpdir/render"
@@ -555,12 +561,15 @@ EOF
 
             spark_history_server_host="spark-history.$domain"
             spark_operator_host="spark-operator.$domain"
+            spark_jupyter_host="spark-jupyter.$domain"
             namespace_label_prefix="homelab.$domain"
 
             while IFS= read -r -d $'\0' file; do
               sed -i \
                 -e "s|__SPARK_HISTORY_SERVER_HOST__|$spark_history_server_host|g" \
                 -e "s|__SPARK_OPERATOR_HOST__|$spark_operator_host|g" \
+                -e "s|__JUPYTER_HOST__|$spark_jupyter_host|g" \
+                -e "s|__JUPYTER_TOKEN__|$jupyter_token|g" \
                 -e "s|__INGRESS_TLS_SECRET_NAME__|$ingress_tls_secret_name|g" \
                 -e "s|__HOMELAB_NAMESPACE_LABEL_PREFIX__|$namespace_label_prefix|g" \
                 -e "s|__DOMAIN__|$domain|g" \

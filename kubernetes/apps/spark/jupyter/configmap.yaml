@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spark-jupyter-conf
+  namespace: spark
+data:
+  # Mounted at /opt/spark/conf/spark-defaults.conf
+  # Sets static cluster-wide defaults; credentials are injected via env vars at session creation
+  spark-defaults.conf: |
+    spark.master                                    k8s://https://kubernetes.default.svc
+    spark.submit.deployMode                         client
+    spark.kubernetes.namespace                      spark
+    spark.kubernetes.container.image                spark-s3:3.5.3
+    spark.executor.instances                        2
+    spark.executor.memory                           512m
+    spark.executor.cores                            1
+    spark.driver.memory                             512m
+    spark.eventLog.enabled                          true
+    spark.eventLog.dir                              s3a://__MINIO_BUCKET__/spark-events
+    spark.hadoop.fs.s3a.endpoint                    http://__MINIO_ENDPOINT__:9000
+    spark.hadoop.fs.s3a.path.style.access           true
+    spark.hadoop.fs.s3a.impl                        org.apache.hadoop.fs.s3a.S3AFileSystem
