@@ -10,6 +10,8 @@ let
   hasServiceCidr = builtins.any (flag: lib.hasInfix "--service-cidr" flag) flags;
   hasDisableServiceLb = builtins.any (flag: lib.hasInfix "--disable=servicelb" flag) flags;
   hasDisableTraefik = builtins.any (flag: lib.hasInfix "--disable=traefik" flag) flags;
+  hasDisableNetworkPolicy = builtins.any (flag: lib.hasInfix "--disable=network-policy" flag) flags;
+  hasFlannelBackendNone = builtins.any (flag: lib.hasInfix "--flannel-backend=none" flag) flags;
 in
 {
   assertions = [
@@ -52,6 +54,14 @@ in
     {
       assertion = (!(clusterEnabled && isServer)) || hasDisableTraefik;
       message = "Control-plane nodes must disable traefik in their k3s flags.";
+    }
+    {
+      assertion = (!(clusterEnabled && isServer)) || hasDisableNetworkPolicy;
+      message = "Control-plane nodes must disable network-policy in their k3s flags (Cilium provides this).";
+    }
+    {
+      assertion = (!(clusterEnabled && isServer)) || hasFlannelBackendNone;
+      message = "Control-plane nodes must set --flannel-backend=none in their k3s flags (Cilium replaces Flannel).";
     }
     {
       assertion = (!(clusterEnabled && isServer)) || hasServiceCidr;

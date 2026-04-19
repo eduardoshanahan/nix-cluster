@@ -1,0 +1,41 @@
+# Cilium values for k3s on ARM64 (Raspberry Pi 4 cluster)
+#
+# kubeProxyReplacement: false keeps k3s's built-in kube-proxy running.
+# This is the simpler path for a homelab cluster — no need to configure
+# the API server endpoint in Cilium itself.
+#
+# The key outcome here is NetworkPolicy enforcement, which Flannel does not
+# provide. Cilium handles this regardless of kube-proxy replacement mode.
+kubeProxyReplacement: false
+
+ipam:
+  mode: kubernetes
+
+# Disable Cilium's masquerading — k3s already handles this via iptables.
+bpf:
+  masquerade: false
+
+# Disable use of digest pinning so ARM64 image variants resolve correctly
+# without needing to pin a specific digest per architecture.
+image:
+  useDigest: false
+
+operator:
+  image:
+    useDigest: false
+
+# Tolerate control-plane taint so Cilium runs on all nodes (required for
+# cluster-wide pod networking).
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+
+# The k3s default kubelet directory differs from upstream Kubernetes.
+cni:
+  chainingMode: none
+  exclusive: true
+
+# Explicitly enable NetworkPolicy enforcement (on by default, stated here
+# for clarity since this is the primary reason for switching from Flannel).
+policyEnforcementMode: default

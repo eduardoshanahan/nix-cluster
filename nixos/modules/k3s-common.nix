@@ -15,6 +15,8 @@ let
     [
       "--disable=servicelb"
       "--disable=traefik"
+      "--disable=network-policy"
+      "--flannel-backend=none"
       "--cluster-cidr=${config.homelab.cluster.clusterCidr}"
       "--service-cidr=${config.homelab.cluster.serviceCidr}"
       "--write-kubeconfig-mode=0644"
@@ -38,6 +40,7 @@ lib.mkIf config.homelab.cluster.enable (
             22
             80
             443
+            4240 # cilium-health inter-node health checks
             config.homelab.observability.nodeExporter.port
           ]
           ++ lib.optionals isServer [
