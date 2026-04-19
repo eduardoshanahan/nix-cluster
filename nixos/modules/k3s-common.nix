@@ -15,7 +15,7 @@ let
     [
       "--disable=servicelb"
       "--disable=traefik"
-      "--disable=network-policy"
+      "--disable-network-policy"
       "--flannel-backend=none"
       "--cluster-cidr=${config.homelab.cluster.clusterCidr}"
       "--service-cidr=${config.homelab.cluster.serviceCidr}"

@@ -11,10 +11,6 @@ kubeProxyReplacement: false
 ipam:
   mode: kubernetes
 
-# Disable Cilium's masquerading — k3s already handles this via iptables.
-bpf:
-  masquerade: false
-
 # Disable use of digest pinning so ARM64 image variants resolve correctly
 # without needing to pin a specific digest per architecture.
 image:
@@ -24,12 +20,19 @@ operator:
   image:
     useDigest: false
 
-# Tolerate control-plane taint so Cilium runs on all nodes (required for
-# cluster-wide pod networking).
-tolerations:
-  - key: node-role.kubernetes.io/control-plane
-    operator: Exists
-    effect: NoSchedule
+# Disable the Envoy DaemonSet — it OOM-crashes on Raspberry Pi 4 (ARM64)
+# due to tcmalloc requiring 1 GB aligned mmap. Envoy is only used for L7
+# (HTTP-level) CiliumNetworkPolicy rules, which are not part of CKAD.
+# Standard Kubernetes NetworkPolicy (L3/L4) is enforced by the main cilium
+# agent and is unaffected.
+envoy:
+  enabled: false
+
+# VXLAN tunnel mode (default). Native routing mode was attempted but caused
+# complete pod egress failure on kernel 6.12 with TCX attach mode — packets
+# were absorbed by cil_from_container with no visible forwarding. Tunnel mode
+# avoids this by encapsulating pod traffic and is safe even after restarts
+# since the cilium_vxlan device is recreated cleanly on a fresh cluster.
 
 # The k3s default kubelet directory differs from upstream Kubernetes.
 cni:
@@ -39,3 +42,10 @@ cni:
 # Explicitly enable NetworkPolicy enforcement (on by default, stated here
 # for clarity since this is the primary reason for switching from Flannel).
 policyEnforcementMode: default
+
+# Disable TCX (TC eXpress) BPF attachment — on kernel 6.12.47 with TCX,
+# packets from pods are absorbed by cil_from_container without being forwarded
+# (monitor shows '-> stack' but packets never arrive anywhere visible to tcpdump).
+# Legacy TC clsact mode works correctly on this kernel.
+bpf:
+  enableTCX: false
