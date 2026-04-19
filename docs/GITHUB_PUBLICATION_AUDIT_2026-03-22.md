@@ -48,7 +48,7 @@ The public repo placeholder contract for those values lives in:
 The intended operator workflow remains:
 
 1. keep the real values in `../nix-cluster-private`
-2. run `nix run "path:$PWD#validate-private-config" -- cluster-node-01`
+2. run `nix run "path:$PWD#validate-private-config" -- cluster-pi-01`
 3. run host validation or deploy helpers as usual
 4. run `nix run .#render-platform` or `nix run .#render-headlamp`
 5. let those render helpers pull the private ingress and MetalLB values

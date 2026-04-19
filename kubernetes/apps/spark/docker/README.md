@@ -24,7 +24,7 @@ If you build on an x86_64 development machine without proper cross-compilation, 
 
 - **Docker with buildx** (Docker Desktop or Docker Engine 19.03+)
 - **QEMU emulation** for ARM64 cross-compilation (automatically set up by script)
-- SSH access to cluster nodes (cluster-node-01 through cluster-node-05)
+- SSH access to cluster nodes (cluster-pi-01 through cluster-pi-05)
 - kubectl configured (see `docs/KUBECTL_ACCESS.md`)
 
 ### Build and Deploy to Cluster (Recommended)
@@ -73,7 +73,7 @@ docker buildx build \
 docker save spark-s3:3.5.3 -o spark-s3-3.5.3.tar
 
 # Step 5: Import to each cluster node via SSH pipe (more efficient than scp)
-for node in cluster-node-01 cluster-node-02 cluster-node-03 cluster-node-04 cluster-node-05; do
+for node in cluster-pi-01 cluster-pi-02 cluster-pi-03 cluster-pi-04 cluster-pi-05; do
     echo "Importing to ${node}..."
     ssh eduardo@${node}.internal.example "sudo k3s ctr images import -" < spark-s3-3.5.3.tar
 done
@@ -88,13 +88,13 @@ rm spark-s3-3.5.3.tar
 
 ```bash
 # Check image exists on a cluster node
-ssh eduardo@cluster-node-01.internal.example "sudo k3s crictl images | grep spark-s3"
+ssh eduardo@cluster-pi-01.internal.example "sudo k3s crictl images | grep spark-s3"
 
 # Expected output:
 # docker.io/library/spark-s3   3.5.3   149cafba02fd5   1.24GB
 
 # Verify correct architecture (should show arm64)
-ssh eduardo@cluster-node-01.internal.example "sudo k3s crictl inspecti docker.io/library/spark-s3:3.5.3 | grep -A2 architecture"
+ssh eduardo@cluster-pi-01.internal.example "sudo k3s crictl inspecti docker.io/library/spark-s3:3.5.3 | grep -A2 architecture"
 
 # Expected output:
 # "architecture": "arm64"
@@ -197,7 +197,7 @@ kubectl get sparkapplication spark-pi-test -n spark
 # Open: https://spark-history.internal.example
 
 # Or verify events written to MinIO
-ssh eduardo@cluster-node-01.internal.example
+ssh eduardo@cluster-pi-01.internal.example
 # If you have MinIO client configured:
 mc ls homelab-minio/spark-homelab/spark-events/
 ```
@@ -243,7 +243,7 @@ The hadoop-aws version must match the Hadoop version bundled with Spark:
 
 3. Verify architecture:
    ```bash
-   ssh eduardo@cluster-node-01.internal.example \
+   ssh eduardo@cluster-pi-01.internal.example \
      "sudo k3s crictl inspecti docker.io/library/spark-s3:3.5.3 | grep architecture"
    # Should show: "architecture": "arm64"
    ```

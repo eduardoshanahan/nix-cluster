@@ -65,7 +65,7 @@ the next highest-value expansion beyond that foundation?".
 The first control-plane investigation for this phase already established some
 important constraints from the live cluster.
 
-Observed on `cluster-node-01`:
+Observed on `cluster-pi-01`:
 
 - scheduler metrics listener exists on `127.0.0.1:10259`
 - controller-manager metrics listener exists on `127.0.0.1:10257`

@@ -13,9 +13,9 @@ This session completed the intended five-node rollout and converted
 Final outcome:
 
 - `pi-node-a` now signs Nix outputs and is usable as the shared ARM builder
-- `cluster-node-01`, `cluster-node-02`, and `cluster-node-03` are `Ready`
+- `cluster-pi-01`, `cluster-pi-02`, and `cluster-pi-03` are `Ready`
   control-plane nodes
-- `cluster-node-04` and `cluster-node-05` are `Ready` worker nodes
+- `cluster-pi-04` and `cluster-pi-05` are `Ready` worker nodes
 - the cluster is now at the intended 3 control-plane + 2 worker shape
 
 Key repo/workflow outcomes:
@@ -30,20 +30,20 @@ Verified from `192.0.2.31` near the end of the session:
 
 ```text
 NAME            STATUS   ROLES                AGE   VERSION        INTERNAL-IP
-cluster-node-01   Ready    control-plane,etcd   34h   v1.35.2+k3s1   192.0.2.31
-cluster-node-02   Ready    control-plane,etcd   10h   v1.35.2+k3s1   192.0.2.32
-cluster-node-03   Ready    control-plane,etcd   43m   v1.35.2+k3s1   192.0.2.33
-cluster-node-04   Ready    <none>               26m   v1.35.2+k3s1   192.0.2.34
-cluster-node-05   Ready    <none>               14s   v1.35.2+k3s1   192.0.2.35
+cluster-pi-01   Ready    control-plane,etcd   34h   v1.35.2+k3s1   192.0.2.31
+cluster-pi-02   Ready    control-plane,etcd   10h   v1.35.2+k3s1   192.0.2.32
+cluster-pi-03   Ready    control-plane,etcd   43m   v1.35.2+k3s1   192.0.2.33
+cluster-pi-04   Ready    <none>               26m   v1.35.2+k3s1   192.0.2.34
+cluster-pi-05   Ready    <none>               14s   v1.35.2+k3s1   192.0.2.35
 ```
 
 Per-node runtime summary:
 
-- `192.0.2.31`: hostname `cluster-node-01`, `k3s` `active`
-- `192.0.2.32`: hostname `cluster-node-02`, `k3s` `active`
-- `192.0.2.33`: hostname `cluster-node-03`, `k3s` `active`
-- `192.0.2.34`: hostname `cluster-node-04`, `k3s` `active`
-- `192.0.2.35`: hostname `cluster-node-05`, `k3s` `active`
+- `192.0.2.31`: hostname `cluster-pi-01`, `k3s` `active`
+- `192.0.2.32`: hostname `cluster-pi-02`, `k3s` `active`
+- `192.0.2.33`: hostname `cluster-pi-03`, `k3s` `active`
+- `192.0.2.34`: hostname `cluster-pi-04`, `k3s` `active`
+- `192.0.2.35`: hostname `cluster-pi-05`, `k3s` `active`
 
 ## What Worked
 
@@ -64,18 +64,18 @@ pi-node-a:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
 
 ### 2. Cross-host deploys now work when trust is present
 
-This was proven by rebuilding `cluster-node-02` with:
+This was proven by rebuilding `cluster-pi-02` with:
 
 ```bash
 export NIX_CLUSTER_IDENTITY_FILE="${NIX_CLUSTER_IDENTITY_FILE:-$HOME/.ssh/operator_ed25519}"
 
 NIX_CLUSTER_BUILD_HOST='operator@192.0.2.58' \
 NIX_CLUSTER_SSHOPTS="-i $NIX_CLUSTER_IDENTITY_FILE -F /dev/null -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5" \
-  nix run .#deploy-cluster-node -- cluster-node-02 operator@192.0.2.32
+  nix run .#deploy-cluster-node -- cluster-pi-02 operator@192.0.2.32
 ```
 
 That build happened on `pi-node-a`, the signed paths were accepted by
-`cluster-node-02`, and the switch completed cleanly.
+`cluster-pi-02`, and the switch completed cleanly.
 
 ### 3. First conversion still needs a separate recovery mindset
 
@@ -86,21 +86,21 @@ What consistently happened on `.33`, `.34`, and `.35`:
 
 1. declarative switch succeeded
 2. `/etc/hostname` changed immediately
-3. runtime hostname could still remain `cluster-node-01`
+3. runtime hostname could still remain `cluster-pi-01`
 4. reboot or stale-state cleanup was still needed before the node joined cleanly
 
 ### 4. Control-plane recovery pattern is now proven
 
-For `cluster-node-03` at `192.0.2.33`, the successful sequence was:
+For `cluster-pi-03` at `192.0.2.33`, the successful sequence was:
 
-1. self-build deploy of `cluster-node-03`
-2. verify `/etc/hostname = cluster-node-03` but runtime hostname still stale
+1. self-build deploy of `cluster-pi-03`
+2. verify `/etc/hostname = cluster-pi-03` but runtime hostname still stale
 3. reboot once
 4. observe `k3s` still behaving like an old embedded server
 5. stop `k3s`
 6. wipe `/var/lib/rancher/k3s`
 7. start `k3s`
-8. verify `cluster-node-03` joined as `Ready`
+8. verify `cluster-pi-03` joined as `Ready`
 
 ### 5. Worker recovery pattern is now proven
 
@@ -114,11 +114,11 @@ For both workers, the successful pattern was:
    - wipe `/var/lib/rancher/k3s`
    - delete `/etc/rancher/node/password`
    - start `k3s`
-5. verify the worker joins from `cluster-node-01`
+5. verify the worker joins from `cluster-pi-01`
 
-This sequence was required on `cluster-node-05`.
+This sequence was required on `cluster-pi-05`.
 
-`cluster-node-04` recovered after reboot once the worker flags were corrected.
+`cluster-pi-04` recovered after reboot once the worker flags were corrected.
 
 ## What Failed
 
@@ -126,7 +126,7 @@ This sequence was required on `cluster-node-05`.
 
 This was the biggest repo bug discovered on March 18.
 
-Observed failures on `cluster-node-04`:
+Observed failures on `cluster-pi-04`:
 
 - `k3s agent` rejected `--cluster-cidr`
 - after that was fixed, `k3s agent` rejected `--disable=servicelb`

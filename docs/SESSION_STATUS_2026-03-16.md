@@ -50,17 +50,17 @@ The docs were updated to reflect the strict restart:
 
 The refactored configuration was validated:
 
-- `cluster-node-01` generates `k3s server`
-- `cluster-node-01` includes `--write-kubeconfig-mode=0644`
-- `cluster-node-04` generates `k3s agent`
-- `cluster-node-04` does not include `--write-kubeconfig-mode=0644`
+- `cluster-pi-01` generates `k3s server`
+- `cluster-pi-01` includes `--write-kubeconfig-mode=0644`
+- `cluster-pi-04` generates `k3s agent`
+- `cluster-pi-04` does not include `--write-kubeconfig-mode=0644`
 
 ### Bootstrap image build
 
 A fresh image was built locally on this host via the remote ARM builder and is
 available here:
 
-- `result-cluster-node-01-refactored/sd-image/nixos-image-sd-card-26.05.20260313.c06b4ae-aarch64-linux.img.zst`
+- `result-cluster-pi-01-refactored/sd-image/nixos-image-sd-card-26.05.20260313.c06b4ae-aarch64-linux.img.zst`
 
 That image was then flashed to the SD cards and booted on the Pis.
 
@@ -68,9 +68,9 @@ That image was then flashed to the SD cards and booted on the Pis.
 
 ### Kubernetes view
 
-From `cluster-node-01`, the cluster currently shows only one node:
+From `cluster-pi-01`, the cluster currently shows only one node:
 
-- `cluster-node-01` at `192.0.2.31`
+- `cluster-pi-01` at `192.0.2.31`
 
 That node is healthy:
 
@@ -83,11 +83,11 @@ That node is healthy:
 
 Direct checks showed:
 
-- `192.0.2.31` responds as `cluster-node-01`, `k3s` active
-- `192.0.2.32` responds as `cluster-node-01`, `k3s` active
-- `192.0.2.33` responds as `cluster-node-01`, `k3s` active
-- `192.0.2.34` responds as `cluster-node-01`, `k3s` active
-- `192.0.2.35` responds as `cluster-node-01`, `k3s` activating
+- `192.0.2.31` responds as `cluster-pi-01`, `k3s` active
+- `192.0.2.32` responds as `cluster-pi-01`, `k3s` active
+- `192.0.2.33` responds as `cluster-pi-01`, `k3s` active
+- `192.0.2.34` responds as `cluster-pi-01`, `k3s` active
+- `192.0.2.35` responds as `cluster-pi-01`, `k3s` activating
 
 So all or nearly all Pis are booting the shared bootstrap image successfully,
 but they have not yet been configured into their real node identities.
@@ -102,18 +102,18 @@ The missing piece is now very clear:
 
 - we have the shared bootstrap image
 - we do not yet have the post-boot process that turns each booted Pi into
-  `cluster-node-01`, `cluster-node-02`, `cluster-node-03`, `cluster-node-04`, and
-  `cluster-node-05`
+  `cluster-pi-01`, `cluster-pi-02`, `cluster-pi-03`, `cluster-pi-04`, and
+  `cluster-pi-05`
 
 ## Node Inventory
 
 | Node | Intended role | Expected IP | MAC |
 | --- | --- | --- | --- |
-| `cluster-node-01` | control plane | `192.0.2.31` | `aa:bb:cc:dd:ee:ff` |
-| `cluster-node-02` | control plane | `192.0.2.32` | `aa:bb:cc:dd:ee:ff` |
-| `cluster-node-03` | control plane | `192.0.2.33` | `aa:bb:cc:dd:ee:ff` |
-| `cluster-node-04` | worker | `192.0.2.34` | `aa:bb:cc:dd:ee:ff` |
-| `cluster-node-05` | worker | `192.0.2.35` | `aa:bb:cc:dd:ee:ff` |
+| `cluster-pi-01` | control plane | `192.0.2.31` | `aa:bb:cc:dd:ee:ff` |
+| `cluster-pi-02` | control plane | `192.0.2.32` | `aa:bb:cc:dd:ee:ff` |
+| `cluster-pi-03` | control plane | `192.0.2.33` | `aa:bb:cc:dd:ee:ff` |
+| `cluster-pi-04` | worker | `192.0.2.34` | `aa:bb:cc:dd:ee:ff` |
+| `cluster-pi-05` | worker | `192.0.2.35` | `aa:bb:cc:dd:ee:ff` |
 
 ## Immediate Next Steps
 

@@ -101,8 +101,8 @@ images unless the user explicitly asks for that change.
 As documented in the March 18, 2026 status and rollout notes:
 
 - the intended cluster shape is 5 Raspberry Pi 4 nodes with 8 GB RAM each
-- `cluster-node-01`, `cluster-node-02`, and `cluster-node-03` are control-plane nodes
-- `cluster-node-04` and `cluster-node-05` are workers
+- `cluster-pi-01`, `cluster-pi-02`, and `cluster-pi-03` are control-plane nodes
+- `cluster-pi-04` and `cluster-pi-05` are workers
 - cluster nodes trust builder keys through
   `homelab.nix.trustedBuilderPublicKeys`
 

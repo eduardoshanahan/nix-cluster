@@ -15,7 +15,7 @@ Replace Flannel with Cilium for NetworkPolicy enforcement (CKAD study).
 `nixos/modules/validation.nix` has assertions for both flags.
 
 NixOS was deployed to all 5 nodes. The cluster was renamed during this process:
-- pi-01/02/03 now show as `cluster-node-01/02/03` (were `cluster-pi-01/02/03`)
+- pi-01/02/03 now show as `cluster-pi-01/02/03` (were `cluster-pi-01/02/03`)
 - pi-04/05 still show as `cluster-pi-04/05` (NixOS not yet deployed to workers)
 
 ### Cluster State (DONE — stable)
@@ -23,9 +23,9 @@ NixOS was deployed to all 5 nodes. The cluster was renamed during this process:
 All 5 nodes are `Ready`:
 
 ```
-cluster-node-01   Ready    control-plane,etcd
-cluster-node-02   Ready    control-plane,etcd
-cluster-node-03   Ready    control-plane,etcd
+cluster-pi-01   Ready    control-plane,etcd
+cluster-pi-02   Ready    control-plane,etcd
+cluster-pi-03   Ready    control-plane,etcd
 cluster-pi-04     Ready    <none>
 cluster-pi-05     Ready    <none>
 ```
@@ -62,7 +62,7 @@ All 5 Cilium pods are `1/1 Running` with `Routing: Network: Tunnel [vxlan]` and
 `Attach Mode: Legacy TC`.
 
 **Pod-to-pod connectivity works** (tested: nettest on pi-05 can ping health endpoint
-on cluster-node-01 via VXLAN).
+on cluster-pi-01 via VXLAN).
 
 ## What Is NOT Working
 
@@ -192,7 +192,7 @@ the older host routing path that properly goes through netfilter.
    ```
 
 6. **Deploy NixOS to worker nodes (pi-04, pi-05)** to rename them to
-   `cluster-node-04/05`. Not required for CKAD study but keeps naming consistent.
+   `cluster-pi-04/05`. Not required for CKAD study but keeps naming consistent.
 
 7. **Commit values.yaml changes** once networking is verified.
 

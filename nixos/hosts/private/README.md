@@ -7,7 +7,7 @@ This directory is now legacy documentation and migration scaffolding.
 Before validating or deploying cluster nodes, run:
 
 ```bash
-nix run "path:$PWD#validate-private-config" -- cluster-node-01
+nix run "path:$PWD#validate-private-config" -- cluster-pi-01
 ```
 
 That helper checks both:
@@ -30,7 +30,7 @@ NIX_CLUSTER_PRIVATE_FLAKE=/absolute/path/to/nix-cluster-private
 Use path-based flake refs for private config checks and node deploys:
 
 ```bash
-path:$PWD#nixosConfigurations.cluster-node-01
+path:$PWD#nixosConfigurations.cluster-pi-01
 ```
 
 Do not rely on plain `.#...` references for this.
@@ -47,11 +47,11 @@ Do not rely on plain `.#...` references for this.
 ## Legacy files
 
 - `overrides.nix`
-- `cluster-node-01.nix`
-- `cluster-node-02.nix`
-- `cluster-node-03.nix`
-- `cluster-node-04.nix`
-- `cluster-node-05.nix`
+- `cluster-pi-01.nix`
+- `cluster-pi-02.nix`
+- `cluster-pi-03.nix`
+- `cluster-pi-04.nix`
+- `cluster-pi-05.nix`
 
 These remain useful as examples of the module shape, but the preferred source
 of truth is now the sibling private flake.

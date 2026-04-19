@@ -10,41 +10,41 @@ today's failures.
 
 Progress today was real:
 
-- `cluster-node-01` is healthy at `192.0.2.31`
-- `cluster-node-02` was successfully converted from the flashed generic-image
+- `cluster-pi-01` is healthy at `192.0.2.31`
+- `cluster-pi-02` was successfully converted from the flashed generic-image
   state into a real second control-plane node at `192.0.2.32`
-- `cluster-node-01` and `cluster-node-02` both show `Ready` in Kubernetes
+- `cluster-pi-01` and `cluster-pi-02` both show `Ready` in Kubernetes
 
 Important remaining state:
 
-- `192.0.2.33` still boots as `cluster-node-01`, `k3s` active
-- `192.0.2.34` still boots as `cluster-node-01`, `k3s` active
-- `192.0.2.35` still boots as `cluster-node-01`, `k3s` activating
+- `192.0.2.33` still boots as `cluster-pi-01`, `k3s` active
+- `192.0.2.34` still boots as `cluster-pi-01`, `k3s` active
+- `192.0.2.35` still boots as `cluster-pi-01`, `k3s` activating
 
 ## Final Verified Cluster State
 
 Verified near the end of the session:
 
 - `192.0.2.31`:
-  - hostname: `cluster-node-01`
+  - hostname: `cluster-pi-01`
   - `k3s`: `active`
 - `192.0.2.32`:
-  - hostname: `cluster-node-02`
+  - hostname: `cluster-pi-02`
   - `k3s`: `active`
 
 Cluster view from `192.0.2.31`:
 
 ```text
 NAME            STATUS   ROLES                AGE   VERSION        INTERNAL-IP
-cluster-node-01   Ready    control-plane,etcd   24h   v1.35.2+k3s1   192.0.2.31
-cluster-node-02   Ready    control-plane,etcd   70s   v1.35.2+k3s1   192.0.2.32
+cluster-pi-01   Ready    control-plane,etcd   24h   v1.35.2+k3s1   192.0.2.31
+cluster-pi-02   Ready    control-plane,etcd   70s   v1.35.2+k3s1   192.0.2.32
 ```
 
 Untouched remaining nodes:
 
-- `192.0.2.33`: `cluster-node-01`, `k3s` `active`
-- `192.0.2.34`: `cluster-node-01`, `k3s` `active`
-- `192.0.2.35`: `cluster-node-01`, `k3s` `activating`
+- `192.0.2.33`: `cluster-pi-01`, `k3s` `active`
+- `192.0.2.34`: `cluster-pi-01`, `k3s` `active`
+- `192.0.2.35`: `cluster-pi-01`, `k3s` `activating`
 
 ## What Worked
 
@@ -52,26 +52,26 @@ Untouched remaining nodes:
 
 These validated cleanly before live rollout:
 
-- `cluster-node-01`
-- `cluster-node-02`
-- `cluster-node-03`
-- `cluster-node-04`
-- `cluster-node-05`
+- `cluster-pi-01`
+- `cluster-pi-02`
+- `cluster-pi-03`
+- `cluster-pi-04`
+- `cluster-pi-05`
 
 Important validated behavior:
 
-- `cluster-node-01` is `k3s server` with `--cluster-init`
-- `cluster-node-02` and `cluster-node-03` are joining `k3s server` nodes
-- `cluster-node-04` and `cluster-node-05` are `k3s agent`
+- `cluster-pi-01` is `k3s server` with `--cluster-init`
+- `cluster-pi-02` and `cluster-pi-03` are joining `k3s server` nodes
+- `cluster-pi-04` and `cluster-pi-05` are `k3s agent`
 
-### 2. This deploy shape worked for `cluster-node-01`
+### 2. This deploy shape worked for `cluster-pi-01`
 
-The successful deploy command for `cluster-node-01` was:
+The successful deploy command for `cluster-pi-01` was:
 
 ```bash
 NIX_SSHOPTS='-F /dev/null -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ConnectTimeout=5' \
   /run/current-system/sw/bin/nixos-rebuild switch \
-  --flake 'path:#cluster-node-01' \
+  --flake 'path:#cluster-pi-01' \
   --build-host operator@192.0.2.58 \
   --target-host operator@192.0.2.31 \
   --sudo
@@ -82,19 +82,19 @@ Key observation:
 - once the builder cache on `pi-node-a` was warm, this path reported
   `copying 0 paths...` and switched quickly
 
-### 3. `cluster-node-02` eventually joined after explicit cleanup
+### 3. `cluster-pi-02` eventually joined after explicit cleanup
 
-`cluster-node-02` did not join correctly after the first successful switch.
+`cluster-pi-02` did not join correctly after the first successful switch.
 
 What finally fixed it:
 
-1. deploy `cluster-node-02` config onto `192.0.2.32`
-2. reboot once so the runtime hostname became `cluster-node-02`
+1. deploy `cluster-pi-02` config onto `192.0.2.32`
+2. reboot once so the runtime hostname became `cluster-pi-02`
 3. stop `k3s`
 4. delete stale `/var/lib/rancher/k3s`
 5. start `k3s` again
 
-After that, `cluster-node-02` joined and became `Ready`.
+After that, `cluster-pi-02` joined and became `Ready`.
 
 ## What Failed
 
@@ -133,7 +133,7 @@ That means:
 - cross-host `--build-host operator@192.0.2.58` is not a complete permanent
   solution yet
 
-We hit the exact failure on `cluster-node-02`:
+We hit the exact failure on `cluster-pi-02`:
 
 - copied paths from `ssh://operator@192.0.2.58`
 - target rejected them because they lacked a trusted signature
@@ -144,11 +144,11 @@ This was the biggest behavioral discovery of the session.
 
 Symptoms observed on `192.0.2.32`:
 
-- after switching to `cluster-node-02`, `/etc/hostname` was correct
-- but the running hostname initially stayed `cluster-node-01`
+- after switching to `cluster-pi-02`, `/etc/hostname` was correct
+- but the running hostname initially stayed `cluster-pi-01`
 - after reboot, `k3s` still behaved like it had old server state
 - logs showed it opening tunnels to itself on `192.0.2.32:6443`
-- it was not appearing in `cluster-node-01`'s node list
+- it was not appearing in `cluster-pi-01`'s node list
 
 What this means:
 
@@ -217,13 +217,13 @@ For each remaining node:
 2. ensure runtime hostname matches the declarative hostname
 3. wipe stale `/var/lib/rancher/k3s` if it still carries old cluster identity
 4. start or restart `k3s`
-5. verify from `cluster-node-01`
+5. verify from `cluster-pi-01`
 
 Likely order:
 
-1. `cluster-node-03` at `192.0.2.33`
-2. `cluster-node-04` at `192.0.2.34`
-3. `cluster-node-05` at `192.0.2.35`
+1. `cluster-pi-03` at `192.0.2.33`
+2. `cluster-pi-04` at `192.0.2.34`
+3. `cluster-pi-05` at `192.0.2.35`
 
 ### Repository changes that should happen next
 

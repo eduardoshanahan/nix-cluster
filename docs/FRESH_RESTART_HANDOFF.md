@@ -5,7 +5,7 @@
 This document is the handoff point for the next clean implementation session.
 
 The goal of the next session is to restart the cluster bootstrap from
-`cluster-node-01` using the refactored repository layout and a stricter
+`cluster-pi-01` using the refactored repository layout and a stricter
 single-image workflow.
 
 ## Decision
@@ -16,7 +16,7 @@ That means:
 
 - use one shared bootstrap image for all five SD cards
 - configure each node after first boot
-- rebuild trust from `cluster-node-01`
+- rebuild trust from `cluster-pi-01`
 - do not continue mixing old and new node-specific bootstrap artifacts
 - treat the current cluster state as disposable learning state
 
@@ -72,11 +72,11 @@ That should be the first implementation goal of the next session.
 
 | Node | Role | DHCP reservation | MAC address |
 | --- | --- | --- | --- |
-| `cluster-node-01` | control plane | `192.0.2.31` | `aa:bb:cc:dd:ee:ff` |
-| `cluster-node-02` | control plane | `192.0.2.32` | `aa:bb:cc:dd:ee:ff` |
-| `cluster-node-03` | control plane | `192.0.2.33` | `aa:bb:cc:dd:ee:ff` |
-| `cluster-node-04` | worker | `192.0.2.34` | `aa:bb:cc:dd:ee:ff` |
-| `cluster-node-05` | worker | `192.0.2.35` | `aa:bb:cc:dd:ee:ff` |
+| `cluster-pi-01` | control plane | `192.0.2.31` | `aa:bb:cc:dd:ee:ff` |
+| `cluster-pi-02` | control plane | `192.0.2.32` | `aa:bb:cc:dd:ee:ff` |
+| `cluster-pi-03` | control plane | `192.0.2.33` | `aa:bb:cc:dd:ee:ff` |
+| `cluster-pi-04` | worker | `192.0.2.34` | `aa:bb:cc:dd:ee:ff` |
+| `cluster-pi-05` | worker | `192.0.2.35` | `aa:bb:cc:dd:ee:ff` |
 
 ## Recommended Next Session Sequence
 
@@ -85,15 +85,15 @@ That should be the first implementation goal of the next session.
 3. Document how node identity and role are applied after first boot.
 4. Build the shared bootstrap image.
 5. Inspect the generated image contents before flashing.
-6. Flash `cluster-node-01`.
-7. Boot only `cluster-node-01` and verify:
+6. Flash `cluster-pi-01`.
+7. Boot only `cluster-pi-01` and verify:
    - SSH access
    - hostname
    - post-boot node configuration flow
    - `k3s server`
    - API endpoint behavior
-8. Repeat the same shared-image bootstrap for `cluster-node-02` through
-   `cluster-node-05`, configuring each node after boot.
+8. Repeat the same shared-image bootstrap for `cluster-pi-02` through
+   `cluster-pi-05`, configuring each node after boot.
 9. Only after the cluster is healthy again, move to future service onboarding.
 
 ## Rules For The Restart

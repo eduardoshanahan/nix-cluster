@@ -44,11 +44,11 @@ All of them are wired to the explicit private flake input path.
 
 The updated repo state was deployed successfully to:
 
-- `cluster-node-01`
-- `cluster-node-02`
-- `cluster-node-03`
-- `cluster-node-04`
-- `cluster-node-05`
+- `cluster-pi-01`
+- `cluster-pi-02`
+- `cluster-pi-03`
+- `cluster-pi-04`
+- `cluster-pi-05`
 
 Final live verification at the end of the session:
 

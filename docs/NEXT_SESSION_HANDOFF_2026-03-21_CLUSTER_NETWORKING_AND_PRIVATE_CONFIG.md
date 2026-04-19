@@ -212,11 +212,11 @@ File changed:
 
 This cleanup was deployed successfully to:
 
-- `cluster-node-01`
-- `cluster-node-02`
-- `cluster-node-03`
-- `cluster-node-04`
-- `cluster-node-05`
+- `cluster-pi-01`
+- `cluster-pi-02`
+- `cluster-pi-03`
+- `cluster-pi-04`
+- `cluster-pi-05`
 
 ## DNS Changes Made During This Session
 
@@ -241,11 +241,11 @@ Important rule reaffirmed:
 
 Final verified live node state:
 
-- `cluster-node-01` `Ready`
-- `cluster-node-02` `Ready`
-- `cluster-node-03` `Ready`
-- `cluster-node-04` `Ready`
-- `cluster-node-05` `Ready`
+- `cluster-pi-01` `Ready`
+- `cluster-pi-02` `Ready`
+- `cluster-pi-03` `Ready`
+- `cluster-pi-04` `Ready`
+- `cluster-pi-05` `Ready`
 
 ### Live workloads
 
@@ -293,7 +293,7 @@ Verified from `pi-node-b`:
 Important nuance:
 
 - a query for `up{job="kube-state-metrics"}` briefly still showed a historical
-  series for the old `cluster-node-01:30080` target
+  series for the old `cluster-pi-01:30080` target
 - this was only a stale historical sample
 - the live target inventory showed only the new HTTPS scrape target
 
@@ -352,9 +352,9 @@ There is an important difference between:
 
 Observed behavior:
 
-- `nix eval .#nixosConfigurations.cluster-node-01...` ignored the gitignored
+- `nix eval .#nixosConfigurations.cluster-pi-01...` ignored the gitignored
   private file and still returned missing/default values
-- `nix eval "path:$PWD#nixosConfigurations.cluster-node-01..."` included the
+- `nix eval "path:$PWD#nixosConfigurations.cluster-pi-01..."` included the
   gitignored local file and returned the correct private values
 
 This matters because:
@@ -369,9 +369,9 @@ To unblock the firewall cleanup rollout, the following were recovered from live
 cluster state:
 
 - cluster token from:
-  - `/var/lib/rancher/k3s/server/token` on `cluster-node-01`
+  - `/var/lib/rancher/k3s/server/token` on `cluster-pi-01`
 - admin SSH keys from:
-  - `/etc/ssh/authorized_keys/eduardo` on `cluster-node-01`
+  - `/etc/ssh/authorized_keys/eduardo` on `cluster-pi-01`
 - trusted builder public key from live Nix config output:
   - `pi-node-a:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=`
 
@@ -581,14 +581,14 @@ ssh -o BatchMode=yes -o ConnectTimeout=6 pi-node-b \
 Use path-based evaluation:
 
 ```bash
-nix eval "path:$PWD#nixosConfigurations.cluster-node-01.config.homelab.cluster.clusterToken" --json
-nix eval "path:$PWD#nixosConfigurations.cluster-node-01.config.homelab.adminAuthorizedKeys" --json
+nix eval "path:$PWD#nixosConfigurations.cluster-pi-01.config.homelab.cluster.clusterToken" --json
+nix eval "path:$PWD#nixosConfigurations.cluster-pi-01.config.homelab.adminAuthorizedKeys" --json
 ```
 
 Do not rely on:
 
 ```bash
-nix eval .#nixosConfigurations.cluster-node-01...
+nix eval .#nixosConfigurations.cluster-pi-01...
 ```
 
 for private-config presence checks.

@@ -43,7 +43,7 @@ scrapeable way for the external Prometheus host:
 - kubelet metrics are on `:10250`
 - API server metrics are on `:6443`
 
-Current observed access behavior from `cluster-node-01`:
+Current observed access behavior from `cluster-pi-01`:
 
 - scheduler and controller-manager `/metrics` return `403`
 - kubelet `/metrics` returns `401`

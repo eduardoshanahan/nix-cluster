@@ -18,7 +18,7 @@ The next gap is deeper visibility into the live `k3s` control plane.
 
 ## What We Learned From The Live Cluster
 
-Direct inspection on `cluster-node-01` showed:
+Direct inspection on `cluster-pi-01` showed:
 
 - scheduler metrics listener on `127.0.0.1:10259`
 - controller-manager metrics listener on `127.0.0.1:10257`

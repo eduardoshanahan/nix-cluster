@@ -127,7 +127,7 @@ That means the cluster should move toward a post-boot workflow such as:
 1. Define and build a single Raspberry Pi bootstrap image
 2. Add validation checks for generated `k3s` units
 3. Define the post-boot node-configuration workflow
-4. Boot and configure `cluster-node-01`
+4. Boot and configure `cluster-pi-01`
 5. Repeat for the other four nodes
 6. Only then continue with ingress, certificates, and workload planning
 

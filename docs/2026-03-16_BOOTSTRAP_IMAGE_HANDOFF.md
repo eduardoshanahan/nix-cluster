@@ -148,11 +148,11 @@ Expected properties:
 Per-node cluster behavior should still be applied later through the
 node-specific configs such as:
 
-- `cluster-node-01`
-- `cluster-node-02`
-- `cluster-node-03`
-- `cluster-node-04`
-- `cluster-node-05`
+- `cluster-pi-01`
+- `cluster-pi-02`
+- `cluster-pi-03`
+- `cluster-pi-04`
+- `cluster-pi-05`
 
 ## Recommended Next Session
 
@@ -164,10 +164,10 @@ node-specific configs such as:
    - `/etc/hostname` contains the expected bootstrap hostname
    - `/etc/ssh/authorized_keys/eduardo` contains the expected keys
 4. Once inspection is satisfactory, flash the image to the SD card for
-   `cluster-node-01`.
-5. Boot only `cluster-node-01`.
+   `cluster-pi-01`.
+5. Boot only `cluster-pi-01`.
 6. Verify SSH access and basic bootstrap behavior.
-7. Apply the node-specific post-boot configuration flow for `cluster-node-01`.
+7. Apply the node-specific post-boot configuration flow for `cluster-pi-01`.
 
 ## Suggested Flashing Source
 

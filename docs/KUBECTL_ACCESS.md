@@ -10,11 +10,11 @@ The nix-cluster runs k3s on Raspberry Pi nodes. The kubeconfig file is generated
 
 ### 1. Copy kubeconfig from a Control Plane Node
 
-The cluster has multiple control plane nodes (cluster-node-01, cluster-node-02, cluster-node-03). Copy the kubeconfig from any control plane node:
+The cluster has multiple control plane nodes (cluster-pi-01, cluster-pi-02, cluster-pi-03). Copy the kubeconfig from any control plane node:
 
 ```bash
-# Copy kubeconfig from cluster-node-01
-ssh -o StrictHostKeyChecking=accept-new eduardo@cluster-node-01.internal.example 'cat /etc/rancher/k3s/k3s.yaml' > ~/.kube/config
+# Copy kubeconfig from cluster-pi-01
+ssh -o StrictHostKeyChecking=accept-new eduardo@cluster-pi-01.internal.example 'cat /etc/rancher/k3s/k3s.yaml' > ~/.kube/config
 chmod 600 ~/.kube/config
 ```
 
@@ -43,11 +43,11 @@ The cluster consists of 5 Raspberry Pi 4 nodes:
 
 | Hostname | FQDN | IP Address | Role |
 |----------|------|------------|------|
-| cluster-node-01 | cluster-node-01.internal.example | 192.0.2.10 | Control Plane (bootstrap) |
-| cluster-node-02 | cluster-node-02.internal.example | 192.0.2.10 | Control Plane |
-| cluster-node-03 | cluster-node-03.internal.example | 192.0.2.10 | Control Plane |
-| cluster-node-04 | cluster-node-04.internal.example | 192.0.2.10 | Worker |
-| cluster-node-05 | cluster-node-05.internal.example | 192.0.2.10 | Worker |
+| cluster-pi-01 | cluster-pi-01.internal.example | 192.0.2.10 | Control Plane (bootstrap) |
+| cluster-pi-02 | cluster-pi-02.internal.example | 192.0.2.10 | Control Plane |
+| cluster-pi-03 | cluster-pi-03.internal.example | 192.0.2.10 | Control Plane |
+| cluster-pi-04 | cluster-pi-04.internal.example | 192.0.2.10 | Worker |
+| cluster-pi-05 | cluster-pi-05.internal.example | 192.0.2.10 | Worker |
 
 The cluster API endpoint is load-balanced across control plane nodes via DNS: `cluster-api.internal.example:6443`
 

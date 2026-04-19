@@ -75,44 +75,44 @@
           ];
         };
 
-        cluster-node-01 = mkClusterSystem {
-          hostName = "cluster-node-01";
+        cluster-pi-01 = mkClusterSystem {
+          hostName = "cluster-pi-01";
           role = "server";
           privateSharedModule = privateSharedOverrides;
-          privateHostModule = maybePrivateHost "cluster-node-01";
-          extraModules = [ ./nixos/hosts/cluster-node-01.nix ];
+          privateHostModule = maybePrivateHost "cluster-pi-01";
+          extraModules = [ ./nixos/hosts/cluster-pi-01.nix ];
         };
 
-        cluster-node-02 = mkClusterSystem {
-          hostName = "cluster-node-02";
+        cluster-pi-02 = mkClusterSystem {
+          hostName = "cluster-pi-02";
           role = "server";
           privateSharedModule = privateSharedOverrides;
-          privateHostModule = maybePrivateHost "cluster-node-02";
-          extraModules = [ ./nixos/hosts/cluster-node-02.nix ];
+          privateHostModule = maybePrivateHost "cluster-pi-02";
+          extraModules = [ ./nixos/hosts/cluster-pi-02.nix ];
         };
 
-        cluster-node-03 = mkClusterSystem {
-          hostName = "cluster-node-03";
+        cluster-pi-03 = mkClusterSystem {
+          hostName = "cluster-pi-03";
           role = "server";
           privateSharedModule = privateSharedOverrides;
-          privateHostModule = maybePrivateHost "cluster-node-03";
-          extraModules = [ ./nixos/hosts/cluster-node-03.nix ];
+          privateHostModule = maybePrivateHost "cluster-pi-03";
+          extraModules = [ ./nixos/hosts/cluster-pi-03.nix ];
         };
 
-        cluster-node-04 = mkClusterSystem {
-          hostName = "cluster-node-04";
+        cluster-pi-04 = mkClusterSystem {
+          hostName = "cluster-pi-04";
           role = "agent";
           privateSharedModule = privateSharedOverrides;
-          privateHostModule = maybePrivateHost "cluster-node-04";
-          extraModules = [ ./nixos/hosts/cluster-node-04.nix ];
+          privateHostModule = maybePrivateHost "cluster-pi-04";
+          extraModules = [ ./nixos/hosts/cluster-pi-04.nix ];
         };
 
-        cluster-node-05 = mkClusterSystem {
-          hostName = "cluster-node-05";
+        cluster-pi-05 = mkClusterSystem {
+          hostName = "cluster-pi-05";
           role = "agent";
           privateSharedModule = privateSharedOverrides;
-          privateHostModule = maybePrivateHost "cluster-node-05";
-          extraModules = [ ./nixos/hosts/cluster-node-05.nix ];
+          privateHostModule = maybePrivateHost "cluster-pi-05";
+          extraModules = [ ./nixos/hosts/cluster-pi-05.nix ];
         };
       };
     }
@@ -166,7 +166,7 @@
               usage
             fi
 
-            node="''${1:-cluster-node-01}"
+            node="''${1:-cluster-pi-01}"
             flake_ref="path:$PWD#nixosConfigurations.$node"
             private_flake_dir="''${NIX_CLUSTER_PRIVATE_FLAKE:-$PWD/../nix-cluster-private}"
 
@@ -450,9 +450,9 @@ EOF
 
               private_flake_dir="''${NIX_CLUSTER_PRIVATE_FLAKE:-$PWD/../nix-cluster-private}"
               private_override_args=(--no-write-lock-file --override-input private "path:$private_flake_dir")
-              flake_ref="path:$PWD#nixosConfigurations.cluster-node-01"
+              flake_ref="path:$PWD#nixosConfigurations.cluster-pi-01"
 
-              validate-private-config --quiet cluster-node-01
+              validate-private-config --quiet cluster-pi-01
 
               domain="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.domain" --raw)"
               ingress_tls_secret_name="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.kubernetes.ingressTlsSecretName" --raw)"
@@ -521,9 +521,9 @@ EOF
 
             private_flake_dir="''${NIX_CLUSTER_PRIVATE_FLAKE:-$PWD/../nix-cluster-private}"
             private_override_args=(--no-write-lock-file --override-input private "path:$private_flake_dir")
-            flake_ref="path:$PWD#nixosConfigurations.cluster-node-01"
+            flake_ref="path:$PWD#nixosConfigurations.cluster-pi-01"
 
-            validate-private-config --quiet cluster-node-01
+            validate-private-config --quiet cluster-pi-01
 
             domain="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.domain" --raw)"
             ingress_tls_secret_name="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.kubernetes.ingressTlsSecretName" --raw)"
@@ -598,9 +598,9 @@ EOF
 
             private_flake_dir="''${NIX_CLUSTER_PRIVATE_FLAKE:-$PWD/../nix-cluster-private}"
             private_override_args=(--no-write-lock-file --override-input private "path:$private_flake_dir")
-            flake_ref="path:$PWD#nixosConfigurations.cluster-node-01"
+            flake_ref="path:$PWD#nixosConfigurations.cluster-pi-01"
 
-            validate-private-config --quiet cluster-node-01
+            validate-private-config --quiet cluster-pi-01
 
             domain="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.domain" --raw)"
             ingress_tls_secret_name="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.kubernetes.ingressTlsSecretName" --raw)"
@@ -681,9 +681,9 @@ EOF
 
             private_flake_dir="''${NIX_CLUSTER_PRIVATE_FLAKE:-$PWD/../nix-cluster-private}"
             private_override_args=(--no-write-lock-file --override-input private "path:$private_flake_dir")
-            flake_ref="path:$PWD#nixosConfigurations.cluster-node-01"
+            flake_ref="path:$PWD#nixosConfigurations.cluster-pi-01"
 
-            validate-private-config --quiet cluster-node-01
+            validate-private-config --quiet cluster-pi-01
 
             domain="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.domain" --raw)"
             ingress_tls_secret_name="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.kubernetes.ingressTlsSecretName" --raw)"

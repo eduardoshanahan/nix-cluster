@@ -174,8 +174,8 @@ For `nix-cluster`, that means:
 
 ```bash
 cd ~/infra/nix-cluster
-nix run "path:$PWD#validate-private-config" -- cluster-node-01
-nix run "path:$PWD#validate-cluster-node" -- cluster-node-01
+nix run "path:$PWD#validate-private-config" -- cluster-pi-01
+nix run "path:$PWD#validate-cluster-node" -- cluster-pi-01
 ```
 
 ## Migration Rule For Other Repos

@@ -82,11 +82,11 @@ Prometheus should scrape host metrics from all five cluster nodes.
 
 Target outcome:
 
-- `cluster-node-01`
-- `cluster-node-02`
-- `cluster-node-03`
-- `cluster-node-04`
-- `cluster-node-05`
+- `cluster-pi-01`
+- `cluster-pi-02`
+- `cluster-pi-03`
+- `cluster-pi-04`
+- `cluster-pi-05`
 
 The intended model is to make these nodes look like any other monitored
 homelab host from the perspective of Prometheus.

@@ -18,8 +18,8 @@ current ground truth.
 
 From the control plane, the cluster is healthy and currently has:
 
-- `cluster-node-01`, `cluster-node-02`, `cluster-node-03` as control-plane nodes
-- `cluster-node-04`, `cluster-node-05` as workers
+- `cluster-pi-01`, `cluster-pi-02`, `cluster-pi-03` as control-plane nodes
+- `cluster-pi-04`, `cluster-pi-05` as workers
 - all five nodes `Ready`
 
 ### Namespaces
@@ -180,7 +180,7 @@ Relevant verified facts from that file:
 - cluster node exporters are scraped as
   `cluster-pi-0N-metrics.<domain>:9100`
 - `kube-state-metrics` scrape target was previously
-  `cluster-node-01.<domain>:30080`
+  `cluster-pi-01.<domain>:30080`
 - Uptime Kuma also monitors:
   - cluster API on `cluster-api.<domain>:6443`
   - SSH on all five Pis
@@ -240,7 +240,7 @@ File changed:
 
 Change made:
 
-- from `cluster-node-01.<domain>:30080`
+- from `cluster-pi-01.<domain>:30080`
 - to `cluster-api.<domain>:30080`
 
 Reason:
@@ -289,7 +289,7 @@ Important interpretation:
 
 So:
 
-- `cluster-api` still effectively points at `cluster-node-01`
+- `cluster-api` still effectively points at `cluster-pi-01`
 - `cluster-api:30080` currently works only because that DNS record points to
   `.31`
 - it should not be assumed that `cluster-api` is already a true HA frontend
@@ -458,7 +458,7 @@ curl -fsS https://<new-kube-state-metrics-hostname>/metrics | sed -n '1,10p'
 ### Verify cluster node metrics
 
 ```bash
-for host in cluster-node-01 cluster-node-02 cluster-node-03 cluster-node-04 cluster-node-05; do
+for host in cluster-pi-01 cluster-pi-02 cluster-pi-03 cluster-pi-04 cluster-pi-05; do
   curl -fsS "http://${host}-metrics.<homelab-domain>:9100/metrics" >/dev/null
 done
 ```
@@ -482,8 +482,8 @@ Check specifically:
 Confirm these cluster monitors remain healthy:
 
 - `Cluster API`
-- `SSH cluster-node-01` through `SSH cluster-node-05`
-- `Node Exporter cluster-node-01` through `Node Exporter cluster-node-05`
+- `SSH cluster-pi-01` through `SSH cluster-pi-05`
+- `Node Exporter cluster-pi-01` through `Node Exporter cluster-pi-05`
 - `kube-state-metrics`
 
 ## Files Most Likely To Change Next

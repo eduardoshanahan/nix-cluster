@@ -151,8 +151,8 @@ If hostname mismatch or stale cluster behavior appears:
 
 This sequence mattered:
 
-1. deploy `cluster-node-02`
-2. observe `/etc/hostname = cluster-node-02` but runtime behavior still stale
+1. deploy `cluster-pi-02`
+2. observe `/etc/hostname = cluster-pi-02` but runtime behavior still stale
 3. reboot
 4. observe correct runtime hostname but stale `k3s` server behavior
 5. wipe `/var/lib/rancher/k3s`
@@ -176,15 +176,15 @@ For worker first-conversion recovery, the March 18 session showed this pattern:
 8. start `k3s`
 9. verify join from `.31`
 
-This was the sequence that finally brought `cluster-node-05` in cleanly.
+This was the sequence that finally brought `cluster-pi-05` in cleanly.
 
 ## Rollout Order
 
 The original rollout order is now complete:
 
-1. `cluster-node-03` at `192.0.2.33`
-2. `cluster-node-04` at `192.0.2.34`
-3. `cluster-node-05` at `192.0.2.35`
+1. `cluster-pi-03` at `192.0.2.33`
+2. `cluster-pi-04` at `192.0.2.34`
+3. `cluster-pi-05` at `192.0.2.35`
 
 For future node recovery or rebuild work, keep this checklist:
 
@@ -196,4 +196,4 @@ For future node recovery or rebuild work, keep this checklist:
 5. if it is a worker and duplicate-hostname / node-password rejection remains,
    wipe `/var/lib/rancher/k3s` and `/etc/rancher/node/password`
 6. restart `k3s`
-7. verify from `cluster-node-01`
+7. verify from `cluster-pi-01`

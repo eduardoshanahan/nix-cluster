@@ -147,7 +147,7 @@ kubectl get pods
 
 ```bash
 kubectl get events -A --sort-by=.lastTimestamp
-kubectl describe node cluster-node-01
+kubectl describe node cluster-pi-01
 kubectl top nodes
 kubectl top pods -A
 kubectl explain deployment.spec.template.spec.containers

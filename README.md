@@ -63,7 +63,7 @@ The tracked placeholder contract lives in:
 
 The repo has an explicit preflight check for the private input:
 
-- `nix run "path:$PWD#validate-private-config" -- cluster-node-01`
+- `nix run "path:$PWD#validate-private-config" -- cluster-pi-01`
 
 The repo also has a session grounding helper that validates core docs and KB
 index availability:
