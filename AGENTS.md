@@ -132,6 +132,29 @@ Use this mental model when editing:
 
 Try to keep host files thin and shared behavior centralized.
 
+## Tooling: Always Use `nix develop`
+
+All cluster tooling (`kubectl`, `helm`, `cilium`, `k9s`, `stern`, `kustomize`) is
+provided by the nix-cluster devShell — **do not assume these are on PATH outside it**.
+
+Before running any kubectl, helm, or cilium command in this repo, enter the devShell:
+
+```bash
+# From nix-cluster/
+nix develop
+```
+
+Or prefix ad-hoc commands with `nix develop --command`:
+
+```bash
+nix develop --command kubectl get nodes
+nix develop --command helm list -n kube-system
+nix develop --command cilium status
+```
+
+If a tool is missing from the devShell, add it to `devShells.default.packages` in
+`flake.nix` — do not install it globally or use an out-of-band package manager.
+
 ## Preferred Commands
 
 Prefer the repo helpers in `flake.nix` over ad hoc commands when they fit:

@@ -792,6 +792,8 @@ EOF
             pkgs.kubernetes-helm
             pkgs.k3s
             pkgs.stern
+            pkgs.cilium-cli  # cilium status / cilium connectivity test / cilium monitor
+            pkgs.jq
           ];
 
           shellHook = ''
