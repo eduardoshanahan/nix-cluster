@@ -103,9 +103,18 @@ As documented in the March 18, 2026 status and rollout notes:
 - the intended cluster shape is 5 Raspberry Pi 4 nodes with 8 GB RAM each
 - `cluster-node-01`, `cluster-node-02`, and `cluster-node-03` are control-plane nodes
 - `cluster-node-04` and `cluster-node-05` are workers
-- `pi-node-a` is the shared ARM builder
 - cluster nodes trust builder keys through
   `homelab.nix.trustedBuilderPublicKeys`
+
+### Build host rules
+
+All 5 cluster nodes are Raspberry Pi 4 (8 GB). **Always use `--self-build`** —
+every node builds its own closure on-device. There is no node in the cluster
+that requires a remote builder.
+
+The remote-builder pattern (build-host = rpi-box-01) only exists in `nix-pi`
+for rpi-box-03 which is a Raspberry Pi 3. Do not carry that pattern into
+`nix-cluster` deploys.
 
 If you are changing bootstrap, deploy, or recovery logic, read the latest
 session-status and rollout docs first and update them if your change alters the
@@ -162,7 +171,7 @@ Prefer the repo helpers in `flake.nix` over ad hoc commands when they fit:
 - `nix run .#session-preflight`
 - `nix run "path:$PWD#validate-private-config" -- <node>`
 - `nix run .#validate-cluster-node -- <node>`
-- `nix run .#deploy-cluster-node -- <node> <target-host>`
+- `nix run .#deploy-cluster-node -- --self-build <node> <target-host>`
 - `nix run .#render-observability`
 - `nix run .#render-headlamp`
 - `nix develop`
