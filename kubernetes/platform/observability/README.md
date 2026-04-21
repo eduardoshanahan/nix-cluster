@@ -16,7 +16,7 @@ Current cluster reality outside this repo-managed slice:
 The intended split is:
 
 - this repo deploys the in-cluster telemetry components
-- `nix-pi` extends Prometheus scrape configuration on `pi-node-b`
+- `nix-pi` extends Prometheus scrape configuration on `rpi-box-02`
 - `nix-services` adds Grafana dashboards for the new telemetry
 
 ## Current Exposure Model

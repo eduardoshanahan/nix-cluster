@@ -43,7 +43,7 @@ Explicitly out of scope:
 
 ## Current Architecture
 
-The current homelab monitoring hub already exists on `pi-node-b` in
+The current homelab monitoring hub already exists on `rpi-box-02` in
 `nix-pi`.
 
 Today that host already runs:
@@ -134,14 +134,14 @@ This should be narrowly scoped:
 
 ### C. Extend Prometheus scrape targets in `nix-pi`
 
-On `pi-node-b`, Prometheus should learn the cluster node targets.
+On `rpi-box-02`, Prometheus should learn the cluster node targets.
 
 This is most naturally owned by `nix-pi`, because that repo already owns the
 monitoring host and its scrape inventory.
 
 ### D. Extend Kuma desired monitors in `nix-pi`
 
-Kuma monitor definitions should also be updated on `pi-node-b`.
+Kuma monitor definitions should also be updated on `rpi-box-02`.
 
 Likely monitor types:
 
@@ -164,15 +164,15 @@ Owns:
 Does not own:
 
 - Grafana dashboard provisioning for the homelab monitoring stack
-- Prometheus scrape inventory on `pi-node-b`
-- Kuma monitor inventory on `pi-node-b`
+- Prometheus scrape inventory on `rpi-box-02`
+- Kuma monitor inventory on `rpi-box-02`
 
 ### `nix-pi`
 
 Owns:
 
-- Prometheus scrape target additions on `pi-node-b`
-- Kuma monitor additions on `pi-node-b`
+- Prometheus scrape target additions on `rpi-box-02`
+- Kuma monitor additions on `rpi-box-02`
 - any host DNS or metrics-target naming conventions used by the monitoring hub
 
 ### `nix-services`
@@ -190,7 +190,7 @@ already supports node-style scraping.
 1. Decide the exact metrics exposure model for cluster nodes.
 2. Implement host metrics export in `nix-cluster`.
 3. Verify metrics endpoints directly from the LAN.
-4. Add Prometheus scrape targets on `pi-node-b` in `nix-pi`.
+4. Add Prometheus scrape targets on `rpi-box-02` in `nix-pi`.
 5. Confirm Prometheus target health.
 6. Add Kuma monitors in `nix-pi`.
 7. Verify Grafana shows useful cluster-node host health.

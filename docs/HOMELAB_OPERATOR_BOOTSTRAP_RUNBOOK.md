@@ -79,8 +79,8 @@ Preflight validation:
 
 ```bash
 cd ~/infra/nix-pi
-nix run "path:$PWD#validate-private-config" -- pi-node-a
-nix run "path:$PWD#validate-pi-host" -- pi-node-a
+nix run "path:$PWD#validate-private-config" -- rpi-box-01
+nix run "path:$PWD#validate-pi-host" -- rpi-box-01
 ```
 
 Before deploys, validate the specific host you are about to touch.

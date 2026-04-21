@@ -11,7 +11,7 @@ monitoring stack?".
 That is already solved by:
 
 - `kube-state-metrics` in `nix-cluster`
-- Prometheus scraping from `pi-node-b`
+- Prometheus scraping from `rpi-box-02`
 - Grafana dashboards and first-pass alerting in sibling repos
 
 The next gap is deeper visibility into the live `k3s` control plane.
@@ -43,7 +43,7 @@ Keep these responsibilities explicit:
   - cluster-side collection design
   - any in-cluster proxy, scraper, RBAC, or exposure model
 - `nix-pi`
-  - Prometheus scrape inventory on `pi-node-b`
+  - Prometheus scrape inventory on `rpi-box-02`
 - `nix-services`
   - Prometheus job model extensions, dashboards, and alert rules if needed
 
@@ -77,7 +77,7 @@ This is preferred over opening additional host ports because:
 
 ## Options Considered
 
-### Option A. Scrape raw `k3s` endpoints directly from `pi-node-b`
+### Option A. Scrape raw `k3s` endpoints directly from `rpi-box-02`
 
 Not recommended.
 
@@ -101,7 +101,7 @@ Why this is the best next step:
 
 - it fits the ownership of `nix-cluster`
 - it keeps auth and endpoint handling inside the cluster boundary
-- it gives `pi-node-b` one explicit scrape target instead of many ad hoc ones
+- it gives `rpi-box-02` one explicit scrape target instead of many ad hoc ones
 
 ### Option C. Defer control-plane metrics for now
 

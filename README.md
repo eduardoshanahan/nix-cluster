@@ -39,7 +39,7 @@ The active rollout plan is:
 
 - keep the shared bootstrap-image workflow
 - use post-boot deploys for node conversion
-- use `pi-node-a` as the shared ARM builder
+- use `rpi-box-01` as the shared ARM builder
 - make cluster nodes trust the builder signing key through
   `homelab.nix.trustedBuilderPublicKeys`
 - preserve a first-boot recovery path for stale `k3s` state

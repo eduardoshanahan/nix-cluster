@@ -50,7 +50,7 @@ Already in place:
 - `kube-state-metrics` is deployed from `nix-cluster`
 - the metrics endpoint is exposed through Traefik ingress at
   `https://kube-state-metrics.<homelab-domain>:443/metrics`
-- Prometheus on `pi-node-b` scrapes that endpoint
+- Prometheus on `rpi-box-02` scrapes that endpoint
 - Grafana content for Kubernetes overview now exists in `nix-services`
 - initial alert rules for Kubernetes state also exist in `nix-services`
 
@@ -83,7 +83,7 @@ Implications:
 
 - there is a real control-plane telemetry surface in `k3s`
 - it is not currently exposed in a way that the external Prometheus host on
-  `pi-node-b` can scrape directly without extra design work
+  `rpi-box-02` can scrape directly without extra design work
 - raw direct scraping from the monitoring host should not be treated as the
   next easy step
 - the next implementation pass should focus on authenticated access design or
@@ -212,14 +212,14 @@ treated as completed groundwork rather than future planning.
 
 ### Step 2. Keep scraping it from the existing Prometheus host
 
-The monitoring hub on `pi-node-b` should remain the central observability
+The monitoring hub on `rpi-box-02` should remain the central observability
 point unless a future architectural change is made deliberately.
 
 That means:
 
 - cluster-native metrics are produced in the cluster
-- Prometheus on `pi-node-b` scrapes them
-- Grafana on `pi-node-b` renders them
+- Prometheus on `rpi-box-02` scrapes them
+- Grafana on `rpi-box-02` renders them
 
 ### Step 3. Expand beyond basic Kubernetes state visibility
 
@@ -258,7 +258,7 @@ Owns:
 
 Owns:
 
-- Prometheus scrape inventory on `pi-node-b`
+- Prometheus scrape inventory on `rpi-box-02`
 - alert routing or host-level monitoring integration on the monitoring node
 
 ### `nix-services`
@@ -349,5 +349,5 @@ If starting a new session for this phase, the next work should be framed as:
    still healthy
 3. then investigate the next highest-value telemetry gap after
    `kube-state-metrics`, starting with realistic `k3s` control-plane signals
-4. do not assume those signals are directly scrapeable from `pi-node-b`
+4. do not assume those signals are directly scrapeable from `rpi-box-02`
    without an authenticated design
