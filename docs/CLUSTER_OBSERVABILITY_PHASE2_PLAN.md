@@ -1,5 +1,11 @@
 # Cluster Observability Phase 2 Plan
 
+**Status: COMPLETE — 2026-04-22**
+
+Core Phase 2 goals implemented and verified. See completion summary at the bottom of this document.
+
+---
+
 ## Purpose
 
 This document defines the second observability phase for the Raspberry Pi
@@ -340,14 +346,33 @@ tooling blindly.
 A smaller set of accurate, comprehensible cluster dashboards will be more
 valuable than a large pile of partially understood panels.
 
-## Fresh Session Start Prompt
+## Completion Summary (2026-04-22)
 
-If starting a new session for this phase, the next work should be framed as:
+### What was implemented
 
-1. use this document as the planning baseline
-2. begin by validating the existing Phase 1 and early Phase 2 foundation is
-   still healthy
-3. then investigate the next highest-value telemetry gap after
-   `kube-state-metrics`, starting with realistic `k3s` control-plane signals
-4. do not assume those signals are directly scrapeable from `rpi-box-02`
-   without an authenticated design
+**Cluster-side (already in place from platform manifests)**
+- `kube-state-metrics` deployed in `observability` namespace, ClusterIP on port 8080
+- `apiserver-metrics-proxy` deployed in `observability` namespace, ClusterIP on port 8080
+- Traefik ingress on `kube-state-metrics.hhlab.home.arpa` (TLS via wildcard cert):
+  - `GET /metrics` → kube-state-metrics:8080
+  - `GET /apiserver-metrics` → apiserver-metrics-proxy:8080
+
+**Monitoring-side (nix-pi-private/modules/rpi-box-02.nix)**
+- `kubeStateMetricsTargets = ["kube-state-metrics.hhlab.home.arpa:443"]`
+- `kubeApiServerMetricsTargets = ["kube-state-metrics.hhlab.home.arpa:443"]`
+- Uptime Kuma keyword monitors: `kube-state-metrics` and `apiserver-metrics-proxy`
+
+### Validation gates — all passed
+
+- `up{job="kube-state-metrics"} = 1`
+- `up{job="kube-apiserver-metrics"} = 1`
+- `kube_node_status_condition{condition="Ready",status="true"}` — all 5 nodes present
+- `count(kube_pod_status_phase{phase="Running"} == 1)` = 20 pods visible
+- Grafana `kubernetes-overview` dashboard (`nix-services`) queries `job="kube-state-metrics"` — works without changes
+- Prometheus alert rules for `KubernetesNodeNotReady`, `KubernetesPodRestarting`, etc. are active
+
+### What remains (deferred — not in Phase 2 scope)
+
+- Direct k3s control-plane metrics (scheduler `:10259`, controller-manager `:10257`) — require authenticated in-cluster scraper design; endpoints return 403 without RBAC
+- Kubelet metrics (`:10250`) — require bearer token or in-cluster collection path
+- These are tracked in `docs/K3S_CONTROL_PLANE_OBSERVABILITY_PLAN.md`
