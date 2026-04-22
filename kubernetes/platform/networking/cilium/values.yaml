@@ -1,12 +1,18 @@
 # Cilium values for k3s on ARM64 (Raspberry Pi 4 cluster)
 #
-# kubeProxyReplacement: false keeps k3s's built-in kube-proxy running.
-# This is the simpler path for a homelab cluster — no need to configure
-# the API server endpoint in Cilium itself.
+# kubeProxyReplacement: true with --disable-kube-proxy in k3s.
+# Cilium's BPF TC hooks intercept pod traffic before it reaches iptables, so
+# iptables PREROUTING KUBE-SERVICES DNAT (ClusterIP routing) and
+# iptables POSTROUTING MASQUERADE (pod egress) both have 0 hits in legacy TC mode.
+# Full kube-proxy replacement moves all service routing and masquerading into BPF,
+# where Cilium's own data plane can apply them correctly.
 #
-# The key outcome here is NetworkPolicy enforcement, which Flannel does not
-# provide. Cilium handles this regardless of kube-proxy replacement mode.
-kubeProxyReplacement: false
+# k8sServiceHost/k8sServicePort: direct API server endpoint for Cilium bootstrap.
+# Cilium needs to reach the API server before ClusterIP routing is active,
+# so we give it the physical address (cluster-api DNS resolves to 192.168.1.31).
+kubeProxyReplacement: true
+k8sServiceHost: cluster-api.hhlab.home.arpa
+k8sServicePort: 6443
 
 ipam:
   mode: kubernetes
@@ -28,11 +34,30 @@ operator:
 envoy:
   enabled: false
 
-# VXLAN tunnel mode (default). Native routing mode was attempted but caused
-# complete pod egress failure on kernel 6.12 with TCX attach mode — packets
-# were absorbed by cil_from_container with no visible forwarding. Tunnel mode
-# avoids this by encapsulating pod traffic and is safe even after restarts
-# since the cilium_vxlan device is recreated cleanly on a fresh cluster.
+# Native routing mode with autoDirectNodeRoutes.
+# All 5 nodes are on the same L2 subnet (192.168.1.0/24), so autoDirectNodeRoutes
+# can program per-node pod subnet routes directly without VXLAN encapsulation.
+# Native routing also fixes the host→pod SNAT issue present in VXLAN mode:
+# in VXLAN mode, cil_from_host SNATs host→pod traffic to cilium_host but
+# does not de-NAT replies, breaking kubelet liveness/readiness probes.
+# In native routing, cil_from_host routes directly to lxc veths without SNAT.
+#
+# NOTE: native routing failed with TCX attach mode (bpf.enableTCX: true) on
+# kernel 6.12 — packets were absorbed. This is safe with legacy TC (bpf.enableTCX: false).
+routingMode: native
+autoDirectNodeRoutes: true
+ipv4NativeRoutingCIDR: 10.42.0.0/16
+
+# Install per-endpoint routes (lxc device) instead of a single node-wide pod
+# subnet route via cilium_host. Without this, host→pod traffic goes via
+# cilium_host → cil_from_host which SNATs the source to the cilium_host IP,
+# but the reverse NAT mapping is not stored (RevNAT=0 in CT), so the reply
+# is never de-NATted and the original host process never receives it. This
+# breaks kubelet liveness/readiness probes and any host-to-pod connectivity.
+# With endpointRoutes, host→pod bypasses cil_from_host entirely: each pod
+# gets a /32 route via its lxc veth, so no SNAT occurs.
+endpointRoutes:
+  enabled: true
 
 # The k3s default kubelet directory differs from upstream Kubernetes.
 cni:

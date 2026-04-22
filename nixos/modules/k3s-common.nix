@@ -17,6 +17,7 @@ let
       "--disable=traefik"
       "--disable-network-policy"
       "--flannel-backend=none"
+      "--disable-kube-proxy"
       "--cluster-cidr=${config.homelab.cluster.clusterCidr}"
       "--service-cidr=${config.homelab.cluster.serviceCidr}"
       "--write-kubeconfig-mode=0644"
@@ -41,6 +42,7 @@ lib.mkIf config.homelab.cluster.enable (
             80
             443
             4240 # cilium-health inter-node health checks
+            10250 # kubelet API — required by metrics-server to scrape node resource usage
             config.homelab.observability.nodeExporter.port
           ]
           ++ lib.optionals isServer [
