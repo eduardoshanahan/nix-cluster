@@ -1,0 +1,127 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubelet-metrics-proxy
+  namespace: observability
+data:
+  proxy.py: |
+    import json
+    import os
+    import ssl
+    import threading
+    import urllib.error
+    import urllib.request
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+
+    TOKEN_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+    CA_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+    API_BASE = "https://kubernetes.default.svc"
+    PORT = int(os.environ.get("PORT", "8080"))
+
+    # Map of exposed path → kubelet sub-path fetched per node
+    ROUTES = {
+        "/cadvisor-metrics": "/metrics/cadvisor",
+    }
+
+
+    def load_token():
+        with open(TOKEN_PATH, "r", encoding="utf-8") as f:
+            return f.read().strip()
+
+
+    def make_context():
+        ctx = ssl.create_default_context(cafile=CA_PATH)
+        return ctx
+
+
+    def fetch_url(url, token, ctx):
+        req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
+        with urllib.request.urlopen(req, context=ctx, timeout=15) as resp:
+            return resp.read()
+
+
+    def list_nodes(token, ctx):
+        data = fetch_url(f"{API_BASE}/api/v1/nodes", token, ctx)
+        nodes = json.loads(data)
+        return [item["metadata"]["name"] for item in nodes["items"]]
+
+
+    def fetch_node_metrics(node, kubelet_path, token, ctx):
+        url = f"{API_BASE}/api/v1/nodes/{node}/proxy{kubelet_path}"
+        return fetch_url(url, token, ctx)
+
+
+    def aggregate_metrics(kubelet_path):
+        token = load_token()
+        ctx = make_context()
+        nodes = list_nodes(token, ctx)
+
+        results = [None] * len(nodes)
+        errors = [None] * len(nodes)
+
+        def worker(idx, node):
+            try:
+                results[idx] = fetch_node_metrics(node, kubelet_path, token, ctx)
+            except Exception as exc:
+                errors[idx] = exc
+
+        threads = [threading.Thread(target=worker, args=(i, n)) for i, n in enumerate(nodes)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        parts = []
+        for i, node in enumerate(nodes):
+            if results[i] is not None:
+                parts.append(results[i])
+            # silently skip nodes that failed — Prometheus will see reduced metrics
+            # but won't fail the whole scrape
+
+        return b"\n".join(parts)
+
+
+    class ProxyHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path == "/healthz":
+                body = b"ok\n"
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+
+            kubelet_path = ROUTES.get(self.path)
+            if kubelet_path is None:
+                body = b"not found\n"
+                self.send_response(404)
+                self.send_header("Content-Type", "text/plain; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+
+            try:
+                body = aggregate_metrics(kubelet_path)
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            except Exception as exc:
+                body = f"aggregation failed: {exc}\n".encode("utf-8")
+                self.send_response(502)
+                self.send_header("Content-Type", "text/plain; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+        def log_message(self, format, *args):
+            return
+
+
+    if __name__ == "__main__":
+        server = ThreadingHTTPServer(("0.0.0.0", PORT), ProxyHandler)
+        server.serve_forever()

@@ -5,3 +5,4 @@ resources:
   - namespace.yaml
   - apiserver-metrics-proxy
   - kube-state-metrics
+  - kubelet-metrics-proxy

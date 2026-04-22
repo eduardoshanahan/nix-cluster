@@ -11,13 +11,12 @@ fleet.
 - 3 control-plane/etcd nodes (cluster-pi-01/02/03), 2 workers (cluster-pi-04/05)
 - Cilium 1.16.19 CNI — native routing, full kube-proxy replacement, NetworkPolicy enforced
 - MetalLB — `192.168.1.36` assigned to Traefik ingress
-- All platform pods healthy: Cilium, CoreDNS, metrics-server, MetalLB, Traefik, kube-state-metrics, apiserver-metrics-proxy
-- Observability Phase 1 complete — cluster nodes visible in Prometheus/Grafana/Uptime Kuma
+- All platform pods healthy: Cilium, CoreDNS, metrics-server, MetalLB, Traefik, kube-state-metrics, apiserver-metrics-proxy, kubelet-metrics-proxy
+- Observability Phase 1 complete — cluster nodes (node-exporter) in Prometheus/Grafana/Uptime Kuma
+- Observability Phase 2 complete — kube-state-metrics and apiserver-metrics scraped by rpi-box-02; Kubernetes overview dashboard and alert rules active
+- Observability Phase 3 complete — cAdvisor container metrics (CPU/memory per pod/container) scraped via kubelet-metrics-proxy
 
-**Next: Observability Phase 2** — expose kube-state-metrics and apiserver-metrics-proxy to rpi-box-02.
-
-See `docs/CLUSTER_OBSERVABILITY_PHASE2_PLAN.md` and `docs/INVESTIGATION_CILIUM_ARM64_K3S.md`
-for the Cilium configuration decisions and known issues.
+See `docs/INVESTIGATION_CILIUM_ARM64_K3S.md` for Cilium configuration decisions and known issues.
 
 ## New Direction
 

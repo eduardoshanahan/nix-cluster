@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kubelet-metrics-proxy
+  namespace: observability
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: __KUBE_STATE_METRICS_HOST__
+      http:
+        paths:
+          - path: /cadvisor-metrics
+            pathType: Prefix
+            backend:
+              service:
+                name: kubelet-metrics-proxy
+                port:
+                  number: 8080
+  tls:
+    - hosts:
+        - __KUBE_STATE_METRICS_HOST__
+      secretName: __INGRESS_TLS_SECRET_NAME__
