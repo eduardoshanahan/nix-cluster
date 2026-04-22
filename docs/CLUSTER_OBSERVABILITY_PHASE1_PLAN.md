@@ -1,5 +1,11 @@
 # Cluster Observability Phase 1 Plan
 
+**Status: COMPLETE — 2026-04-22**
+
+All Phase 1 goals implemented and verified. See completion summary at the bottom of this document.
+
+---
+
 ## Purpose
 
 This document defines the first observability phase for the Raspberry Pi
@@ -230,11 +236,32 @@ should be broadly reachable without reason.
 The existing dashboards expect standard node-exporter-style host metrics.
 Temperature data may need a quick reality check on the Pi cluster nodes.
 
-## Fresh Session Start Prompt
+## Completion Summary (2026-04-22)
 
-If starting a new session for this phase, the next work should be framed as:
+### What was implemented
 
-1. implement Phase 1 cluster observability from this document
-2. start with cluster-side host metrics exposure in `nix-cluster`
-3. only then update `nix-pi` monitoring targets and Kuma monitors
+**Cluster-side (nix-cluster)**
+- `node_exporter` already enabled on all cluster nodes via `homelab.observability.nodeExporter`
+- Port 9100 already open in firewall via `config.homelab.observability.nodeExporter.port`
+- No additional cluster-side changes needed for Phase 1
+
+**Monitoring-side (nix-pi-private/modules/rpi-box-02.nix)**
+- Added `cluster-pi-01` through `cluster-pi-05` to `monitoringTargets.node`
+  → Prometheus `nodes` job now includes all 5 cluster nodes at `<hostname>.hhlab.home.arpa:9100`
+- Added Uptime Kuma port monitor: `Kubernetes API` on `cluster-api.hhlab.home.arpa:6443`
+- Added Uptime Kuma HTTP monitors: `Node Exporter cluster-pi-01` through `cluster-pi-05`
+
+### Validation gates — all passed
+
+- All 5 cluster node-exporter endpoints reachable from rpi-box-02
+- Prometheus `up{job="nodes"}` = 1 for all 5 cluster nodes
+- Uptime Kuma monitors created and active
+- Existing Grafana node dashboards pick up cluster nodes automatically (same `nodes` job)
+- No new Grafana dashboard work required for Phase 1
+
+### Next: Phase 2
+
+See `docs/CLUSTER_OBSERVABILITY_PHASE2_PLAN.md` — Kubernetes-aware telemetry:
+kube-state-metrics and apiserver-metrics-proxy ingress/exposure so rpi-box-02
+can scrape them.
 

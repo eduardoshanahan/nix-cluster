@@ -5,18 +5,19 @@ fleet.
 
 ## Current Status
 
-We are intentionally restarting the implementation workflow after learning that
-the first per-node SD-card approach was too brittle.
+**Cluster is running (as of 2026-04-22).**
 
-The cluster shape is still the same:
+- 5 Raspberry Pi 4 nodes (8 GB RAM each), NixOS, k3s v1.35.2+k3s1
+- 3 control-plane/etcd nodes (cluster-pi-01/02/03), 2 workers (cluster-pi-04/05)
+- Cilium 1.16.19 CNI — native routing, full kube-proxy replacement, NetworkPolicy enforced
+- MetalLB — `192.168.1.36` assigned to Traefik ingress
+- All platform pods healthy: Cilium, CoreDNS, metrics-server, MetalLB, Traefik, kube-state-metrics, apiserver-metrics-proxy
+- Observability Phase 1 complete — cluster nodes visible in Prometheus/Grafana/Uptime Kuma
 
-- five Raspberry Pi 4 nodes with 8 GB RAM each
-- NixOS on every node
-- `k3s`
-- 3 control-plane nodes and 2 workers
-- no workload migration yet
+**Next: Observability Phase 2** — expose kube-state-metrics and apiserver-metrics-proxy to rpi-box-02.
 
-What changes now is the provisioning workflow.
+See `docs/CLUSTER_OBSERVABILITY_PHASE2_PLAN.md` and `docs/INVESTIGATION_CILIUM_ARM64_K3S.md`
+for the Cilium configuration decisions and known issues.
 
 ## New Direction
 
