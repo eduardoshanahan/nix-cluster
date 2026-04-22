@@ -1,5 +1,11 @@
 # k3s Control-Plane Observability Plan
 
+**Status: Phase 3 (cAdvisor) COMPLETE — 2026-04-22. Scheduler/controller-manager deferred.**
+
+See completion summary at the bottom of this document.
+
+---
+
 ## Purpose
 
 This document defines the next implementation slice after the initial
@@ -152,9 +158,44 @@ This phase should count as complete only when:
 
 ## Immediate Next Session Prompt
 
-If resuming from here, start with:
+If resuming here for scheduler/controller-manager work, start with:
 
 1. read this file
-2. verify the existing `kube-state-metrics` path is still healthy
-3. choose the first control-plane metric family to target
-4. prototype the cluster-side authenticated collection design in `nix-cluster`
+2. verify `kubelet-cadvisor` Prometheus target is still `up=1`
+3. design the authenticated in-cluster collection model for scheduler (`:10259`) and controller-manager (`:10257`)
+4. implement as a new proxy component in `kubernetes/platform/observability/`
+
+---
+
+## Completion Summary — Phase 3 (cAdvisor) — 2026-04-22
+
+### What was implemented
+
+**Cluster-side (`kubernetes/platform/observability/kubelet-metrics-proxy/`):**
+- Python proxy deployed in `observability` namespace
+- ServiceAccount with RBAC: `nodes/list` + `nodes/proxy/get`
+- Fetches `/metrics/cadvisor` from all 5 nodes in parallel via Kubernetes API proxy
+  (`https://kubernetes.default.svc/api/v1/nodes/{name}/proxy/metrics/cadvisor`)
+- Exposed at `GET /cadvisor-metrics` on `kube-state-metrics.hhlab.home.arpa:443` via Traefik ingress
+- Response: ~2 MB per scrape, aggregated across all 5 nodes
+
+**Monitoring-side (`nix-pi-private/modules/rpi-box-02.nix`):**
+- `extraStaticJobs` entry: job `kubelet-cadvisor`, scheme `https`, path `/cadvisor-metrics`, tlsInsecureSkipVerify true
+- Uptime Kuma keyword monitor: `kubelet-cadvisor-proxy` checks `cadvisor_version_info`
+
+### Validation
+
+- `up{job="kubelet-cadvisor"} = 1`
+- `count(container_cpu_usage_seconds_total)` = 254 series (all 5 nodes, all containers)
+
+### What was deliberately not implemented
+
+**Raw kubelet `/metrics`:**
+k3s bundles the API server aggregator into the kubelet process. The `/metrics` endpoint on
+each node returns ~3 MB including API server aggregator metrics. Aggregated across 5 nodes
+this is 14 MB per scrape — exceeds Prometheus scrape timeout and provides low marginal
+value since kube-state-metrics already covers pod health.
+
+**Scheduler (`:10259`) and controller-manager (`:10257`):**
+These listeners are bound to `127.0.0.1` and return `403` without RBAC + bearer tokens.
+Accessing them requires an authenticated in-cluster collection approach. Deferred.
