@@ -6,6 +6,9 @@ namespace: kafka
 resources:
   - ingress.yaml
 
+patches:
+  - path: startup-probe-patch.yaml
+
 helmCharts:
   - name: kafka-ui
     releaseName: kafka-ui

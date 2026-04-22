@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-ui
+  namespace: kafka
+spec:
+  template:
+    spec:
+      containers:
+        - name: kafka-ui
+          startupProbe:
+            failureThreshold: 15
