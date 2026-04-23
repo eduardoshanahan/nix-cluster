@@ -493,7 +493,7 @@ EOF
               exec kubectl kustomize --enable-helm "$render_root/${relativePath}"
             '';
           };
-        renderObservability = pkgs.writeShellApplication {
+        renderObservability = renderTemplatedKustomize {
           name = "render-observability";
           relativePath = "platform/observability";
         };

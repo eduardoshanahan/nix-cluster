@@ -6,3 +6,4 @@ resources:
   - apiserver-metrics-proxy
   - kube-state-metrics
   - kubelet-metrics-proxy
+  - control-plane-metrics-proxy

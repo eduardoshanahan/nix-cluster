@@ -21,6 +21,12 @@ let
       "--cluster-cidr=${config.homelab.cluster.clusterCidr}"
       "--service-cidr=${config.homelab.cluster.serviceCidr}"
       "--write-kubeconfig-mode=0644"
+      # Expose scheduler and controller-manager metrics on all interfaces
+      # so the in-cluster control-plane metrics proxy can scrape them.
+      "--kube-scheduler-arg=bind-address=0.0.0.0"
+      "--kube-scheduler-arg=authorization-always-allow-paths=/metrics,/healthz,/readyz"
+      "--kube-controller-manager-arg=bind-address=0.0.0.0"
+      "--kube-controller-manager-arg=authorization-always-allow-paths=/metrics,/healthz,/readyz"
     ]
     ++ map (san: "--tls-san=${san}") serverTlsSans;
 in
@@ -50,6 +56,8 @@ lib.mkIf config.homelab.cluster.enable (
             9345
             2379
             2380
+            10257 # kube-controller-manager metrics
+            10259 # kube-scheduler metrics
           ];
         allowedUDPPorts = [ 8472 ];
       };
