@@ -1,6 +1,6 @@
 # k3s Control-Plane Observability Plan
 
-**Status: Phase 3 (cAdvisor) COMPLETE — 2026-04-22. Scheduler/controller-manager deferred.**
+**Status: ALL PHASES COMPLETE — Phase 4 (scheduler/controller-manager) COMPLETE 2026-04-23.**
 
 See completion summary at the bottom of this document.
 
@@ -199,3 +199,44 @@ value since kube-state-metrics already covers pod health.
 **Scheduler (`:10259`) and controller-manager (`:10257`):**
 These listeners are bound to `127.0.0.1` and return `403` without RBAC + bearer tokens.
 Accessing them requires an authenticated in-cluster collection approach. Deferred.
+
+---
+
+## Completion Summary — Phase 4 (scheduler/controller-manager) — 2026-04-23
+
+### What was implemented
+
+**k3s flags (`nixos/modules/k3s-common.nix`):**
+- `--kube-scheduler-arg=bind-address=0.0.0.0` — expose scheduler on all interfaces
+- `--kube-scheduler-arg=authorization-always-allow-paths=/metrics,/healthz,/readyz` — bypass RBAC for metrics
+- Same two flags for `--kube-controller-manager-arg`
+- Firewall ports 10257 and 10259 opened on all control-plane nodes
+
+**Cluster-side (`kubernetes/platform/observability/control-plane-metrics-proxy/`):**
+- Python proxy deployed in `observability` namespace
+- ServiceAccount with RBAC: `nodes/list`
+- Discovers all control-plane node IPs (label `node-role.kubernetes.io/control-plane`)
+- Fetches `/metrics` directly from each node over HTTPS with `ssl.CERT_NONE` (no auth token needed — auth bypassed via `authorization-always-allow-paths`)
+- Aggregates in parallel with 15s per-node timeout
+- Routes: `/scheduler-metrics` → `:10259`, `/controller-manager-metrics` → `:10257`
+- Exposed on `kube-state-metrics.hhlab.home.arpa:443` via Traefik ingress (same host as other proxies)
+
+**Monitoring-side (`nix-pi-private/modules/rpi-box-02.nix`):**
+- `extraStaticJobs` entries: `kube-scheduler` and `kube-controller-manager`, 60s interval / 30s timeout
+- Uptime Kuma keyword monitors for both endpoints
+
+**nix-services (`services/prometheus/`):**
+- Added `scrapeInterval` and `scrapeTimeout` options to `extraStaticJobs` submodule
+
+### Validation
+
+- `up{job="kube-scheduler"} = 1`
+- `up{job="kube-controller-manager"} = 1`
+- Both scraping from all 3 control-plane nodes in parallel
+
+### Design notes
+
+- Auth bypass via `authorization-always-allow-paths` is safe for homelab: metrics contain no sensitive state,
+  and the port is only accessible inside the cluster LAN (firewall allows only cluster nodes, not the internet)
+- 60s scrape interval chosen because the proxy aggregates 3 nodes sequentially in the worst case
+- `renderObservability` in `flake.nix` was broken (missing `text` field); fixed to use `renderTemplatedKustomize`
