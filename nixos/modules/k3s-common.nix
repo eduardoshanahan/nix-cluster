@@ -48,6 +48,7 @@ lib.mkIf config.homelab.cluster.enable (
             80
             443
             4240 # cilium-health inter-node health checks
+            7946 # MetalLB memberlist (L2 leader election gossip)
             10250 # kubelet API — required by metrics-server to scrape node resource usage
             config.homelab.observability.nodeExporter.port
           ]
@@ -59,7 +60,7 @@ lib.mkIf config.homelab.cluster.enable (
             10257 # kube-controller-manager metrics
             10259 # kube-scheduler metrics
           ];
-        allowedUDPPorts = [ 8472 ];
+        allowedUDPPorts = [ 8472 7946 ];
       };
 
       boot.kernel.sysctl = {
