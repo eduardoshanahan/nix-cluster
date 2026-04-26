@@ -116,14 +116,24 @@ builder for any cluster node. Its signing key (`meganix-builder-1`) is trusted
 by all cluster nodes via `homelab.nix.trustedBuilderPublicKeys` in
 `nix-cluster-private`. Use it for faster full-closure rebuilds:
 
+**Running from meganix itself** (repo is on meganix's filesystem — most common):
+omit `--build-host`. The local nix-daemon already signs with the meganix key,
+so the build IS a meganix-signed build without SSH loopback:
+
+```bash
+nix run .#deploy-cluster-node -- cluster-pi-01 cluster-pi-01.hhlab.home.arpa
+```
+
+**Running from a remote machine** (thinkpad, etc.):
+
 ```bash
 nix run .#deploy-cluster-node -- \
   --build-host eduardo@meganix.hhlab.home.arpa \
   cluster-pi-01 cluster-pi-01.hhlab.home.arpa
 ```
 
-Or set `NIX_CLUSTER_BUILD_HOST=eduardo@meganix.hhlab.home.arpa` to use it for
-all deploys in a session. Meganix pre-flight:
+Or set `NIX_CLUSTER_BUILD_HOST=eduardo@meganix.hhlab.home.arpa` for all deploys
+in a session. Meganix pre-flight (run from the remote machine):
 
 ```bash
 ssh -o BatchMode=yes -o ConnectTimeout=6 eduardo@meganix.hhlab.home.arpa \
