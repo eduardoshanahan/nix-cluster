@@ -108,13 +108,30 @@ As documented in the March 18, 2026 status and rollout notes:
 
 ### Build host rules
 
-All 5 cluster nodes are Raspberry Pi 4 (8 GB). **Always use `--self-build`** —
-every node builds its own closure on-device. There is no node in the cluster
-that requires a remote builder.
+All 5 cluster nodes are Raspberry Pi 4 (8 GB). The default deploy mode is
+`--self-build` — each node builds its own closure on-device.
 
-The remote-builder pattern (build-host = rpi-box-01) only exists in `nix-pi`
-for rpi-box-03 which is a Raspberry Pi 3. Do not carry that pattern into
-`nix-cluster` deploys.
+meganix (Threadripper 2920X, 24 threads, 125 GB RAM) is also a valid remote
+builder for any cluster node. Its signing key (`meganix-builder-1`) is trusted
+by all cluster nodes via `homelab.nix.trustedBuilderPublicKeys` in
+`nix-cluster-private`. Use it for faster full-closure rebuilds:
+
+```bash
+nix run .#deploy-cluster-node -- \
+  --build-host eduardo@meganix.hhlab.home.arpa \
+  cluster-pi-01 cluster-pi-01.hhlab.home.arpa
+```
+
+Or set `NIX_CLUSTER_BUILD_HOST=eduardo@meganix.hhlab.home.arpa` to use it for
+all deploys in a session. Meganix pre-flight:
+
+```bash
+ssh -o BatchMode=yes -o ConnectTimeout=6 eduardo@meganix.hhlab.home.arpa \
+  "test -f /etc/nix/meganix-builder-priv.pem && \
+   cat /proc/sys/fs/binfmt_misc/aarch64-linux | grep -q enabled"
+```
+
+`--self-build` remains the safe fallback when meganix is unavailable.
 
 If you are changing bootstrap, deploy, or recovery logic, read the latest
 session-status and rollout docs first and update them if your change alters the
