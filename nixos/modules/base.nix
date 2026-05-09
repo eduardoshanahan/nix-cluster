@@ -28,7 +28,8 @@
   ];
 
   nix.settings.require-sigs = lib.mkDefault true;
-  nix.settings.trusted-public-keys = config.homelab.nix.trustedBuilderPublicKeys;
+  nix.settings.substituters = lib.mkAfter [ "https://cache.hhlab.home.arpa" ];
+  nix.settings.trusted-public-keys = config.homelab.nix.trustedBuilderPublicKeys ++ [ "homelab-cache-1:4n64FJC4BCb6bhHQYT9vnrSUHwcJI8S7ktDgpHU1I0E=" ];
 
   services.prometheus.exporters.node = lib.mkIf config.homelab.observability.nodeExporter.enable {
     enable = true;
