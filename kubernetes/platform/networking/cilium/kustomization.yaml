@@ -7,6 +7,6 @@ helmCharts:
   - name: cilium
     releaseName: cilium
     repo: https://helm.cilium.io/
-    version: 1.16.19
+    version: 1.19.4
     namespace: kube-system
     valuesFile: values.yaml
