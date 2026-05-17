@@ -714,54 +714,6 @@ EOF
             exec kubectl kustomize --enable-helm "$render_root/apps/kafka"
           '';
         };
-        renderMongo = pkgs.writeShellApplication {
-          name = "render-mongo";
-          runtimeInputs = [
-            pkgs.findutils
-            pkgs.gnused
-            pkgs.kubectl
-            pkgs.kubernetes-helm
-            pkgs.nix
-            validatePrivateConfig
-          ];
-          text = ''
-            set -euo pipefail
-
-            private_flake_dir="''${NIX_CLUSTER_PRIVATE_FLAKE:-$PWD/../nix-cluster-private}"
-            private_override_args=(--no-write-lock-file --override-input private "path:$private_flake_dir")
-            flake_ref="path:$PWD#nixosConfigurations.cluster-pi-01"
-
-            validate-private-config --quiet cluster-pi-01
-
-            mongo_root_username="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.mongo.rootUsername" --raw)"
-            mongo_root_password="$(nix eval "''${private_override_args[@]}" "$flake_ref.config.homelab.mongo.rootPassword" --raw)"
-
-            if [ "$mongo_root_username" = "CHANGE_ME_MONGO_ROOT_USERNAME" ]; then
-              echo "render failed: set homelab.mongo.rootUsername in nix-cluster-private" >&2
-              exit 1
-            fi
-
-            if [ "$mongo_root_password" = "CHANGE_ME_MONGO_ROOT_PASSWORD" ]; then
-              echo "render failed: set homelab.mongo.rootPassword in nix-cluster-private" >&2
-              exit 1
-            fi
-
-            tmpdir="$(mktemp -d)"
-            trap 'rm -rf "$tmpdir"' EXIT
-            render_root="$tmpdir/render"
-
-            cp -R "$PWD/kubernetes" "$render_root"
-
-            while IFS= read -r -d $'\0' file; do
-              sed -i \
-                -e "s|__MONGO_ROOT_USERNAME__|$mongo_root_username|g" \
-                -e "s|__MONGO_ROOT_PASSWORD__|$mongo_root_password|g" \
-                "$file"
-            done < <(find "$render_root" -type f \( -name '*.yaml' -o -name '*.yml' \) -print0)
-
-            exec kubectl kustomize --enable-helm "$render_root/apps/mongo"
-          '';
-        };
       in
       {
         packages.bootstrap-sd-image = bootstrapImage;
@@ -775,7 +727,6 @@ EOF
         packages.render-spark = renderSpark;
         packages.render-wikijs = renderWikiJS;
         packages.render-kafka = renderKafka;
-        packages.render-mongo = renderMongo;
 
         apps.validate-private-config = {
           type = "app";
@@ -825,11 +776,6 @@ EOF
         apps.render-kafka = {
           type = "app";
           program = "${renderKafka}/bin/render-kafka";
-        };
-
-        apps.render-mongo = {
-          type = "app";
-          program = "${renderMongo}/bin/render-mongo";
         };
 
         devShells.default = pkgs.mkShell {
