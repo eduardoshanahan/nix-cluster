@@ -7,7 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 IMAGE_NAME="spark-s3"
 JUPYTER_IMAGE_NAME="spark-jupyter"
-IMAGE_TAG="3.5.3"
+IMAGE_TAG="3.5.8"
 FULL_IMAGE="${IMAGE_NAME}:${IMAGE_TAG}"
 FULL_JUPYTER_IMAGE="${JUPYTER_IMAGE_NAME}:${IMAGE_TAG}"
 PLATFORM="linux/arm64"
