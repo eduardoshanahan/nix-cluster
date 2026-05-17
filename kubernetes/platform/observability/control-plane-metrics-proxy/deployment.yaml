@@ -47,7 +47,7 @@ spec:
               memory: 32Mi
             limits:
               cpu: 200m
-              memory: 128Mi
+              memory: 512Mi
           volumeMounts:
             - name: proxy-script
               mountPath: /app
