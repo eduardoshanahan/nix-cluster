@@ -1,7 +1,7 @@
 # JupyterLab image with PySpark for interactive Spark study
 # Built from upstream apache/spark:3.5.3 (same base as spark-s3) to avoid
 # depending on a locally-tagged image that buildx cannot resolve.
-FROM apache/spark:3.5.3
+FROM apache/spark:3.5.8
 
 USER root
 
@@ -42,5 +42,5 @@ CMD ["python3", "-m", "jupyterlab", \
      "--notebook-dir=/opt/notebooks"]
 
 LABEL org.opencontainers.image.title="Apache Spark + JupyterLab"
-LABEL org.opencontainers.image.description="Apache Spark 3.5.3 with JupyterLab for interactive PySpark study"
-LABEL org.opencontainers.image.version="3.5.3-jupyter-py38"
+LABEL org.opencontainers.image.description="Apache Spark 3.5.8 with JupyterLab for interactive PySpark study"
+LABEL org.opencontainers.image.version="3.5.8-jupyter-py38"

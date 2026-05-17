@@ -20,7 +20,7 @@ spec:
         kubernetes.io/arch: arm64
       initContainers:
       - name: download-s3-jars
-        image: apache/spark:3.5.3
+        image: apache/spark:3.5.8
         command:
           - sh
           - -c
@@ -39,7 +39,7 @@ spec:
             memory: 256Mi
       containers:
       - name: spark-history-server
-        image: apache/spark:3.5.3
+        image: apache/spark:3.5.8
         imagePullPolicy: IfNotPresent
         command:
           - /opt/spark/sbin/start-history-server.sh

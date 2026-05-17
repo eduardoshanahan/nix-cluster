@@ -20,7 +20,7 @@ spec:
         kubernetes.io/arch: arm64
       containers:
       - name: jupyter
-        image: spark-jupyter:3.5.3
+        image: spark-jupyter:3.5.8
         imagePullPolicy: IfNotPresent
         ports:
           - name: http

@@ -21,7 +21,7 @@ spec:
         kubernetes.io/arch: arm64
       containers:
         - name: wikijs
-          image: ghcr.io/requarks/wiki:2.5.300
+          image: ghcr.io/requarks/wiki:2.5.314
           imagePullPolicy: IfNotPresent
           envFrom:
             - secretRef:

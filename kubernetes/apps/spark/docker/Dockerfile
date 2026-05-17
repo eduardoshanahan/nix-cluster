@@ -1,5 +1,5 @@
 # Custom Spark image with S3 support for homelab
-FROM apache/spark:3.5.3
+FROM apache/spark:3.5.8
 
 USER root
 
@@ -18,6 +18,6 @@ USER 185
 
 # Metadata
 LABEL org.opencontainers.image.title="Apache Spark with S3 support"
-LABEL org.opencontainers.image.description="Apache Spark 3.5.3 with hadoop-aws JARs for MinIO/S3 event logging"
-LABEL org.opencontainers.image.version="3.5.3-s3"
+LABEL org.opencontainers.image.description="Apache Spark 3.5.8 with hadoop-aws JARs for MinIO/S3 event logging"
+LABEL org.opencontainers.image.version="3.5.8-s3"
 LABEL org.opencontainers.image.source="https://gitea.internal.example/hhlab-infrastructure/nix-cluster"
