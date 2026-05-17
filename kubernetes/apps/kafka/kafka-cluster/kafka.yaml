@@ -3,7 +3,7 @@
 #
 # Bootstrap address (cluster-internal):
 #   kafka-kafka-bootstrap.kafka.svc.cluster.local:9092
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaNodePool
 metadata:
   name: combined
@@ -31,7 +31,7 @@ spec:
     -Xms: 512m
     -Xmx: 768m
 ---
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: Kafka
 metadata:
   name: kafka
