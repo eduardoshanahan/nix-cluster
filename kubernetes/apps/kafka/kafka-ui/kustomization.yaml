@@ -13,6 +13,6 @@ helmCharts:
   - name: kafka-ui
     releaseName: kafka-ui
     repo: https://kafbat.github.io/helm-charts
-    version: 1.6.3
+    version: 1.6.4
     namespace: kafka
     valuesFile: values.yaml
