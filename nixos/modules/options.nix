@@ -177,6 +177,20 @@
         };
       };
 
+      mongo = {
+        rootUsername = lib.mkOption {
+          type = lib.types.str;
+          default = "CHANGE_ME_MONGO_ROOT_USERNAME";
+          description = "MongoDB root username (store in private config).";
+        };
+
+        rootPassword = lib.mkOption {
+          type = lib.types.str;
+          default = "CHANGE_ME_MONGO_ROOT_PASSWORD";
+          description = "MongoDB root password (store in private config).";
+        };
+      };
+
       cluster = {
         enable = lib.mkOption {
           type = lib.types.bool;
