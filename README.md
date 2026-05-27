@@ -91,7 +91,6 @@ config presence.
 
 ## Start Here
 
-- `HOMELAB_AND_CLUSTER_CONTEXT.md`
 - `docs/PRIVATE_COMPANION_REPO_CONVENTION.md`
 - `docs/RESTART_PLAN.md`
 - `docs/LESSONS_LEARNED.md`

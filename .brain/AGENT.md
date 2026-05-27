@@ -27,10 +27,9 @@ This file extends the global instructions at `~/Programming/hhlab/brain/.brain/A
 Read in this order before making non-trivial changes:
 
 1. `README.md`
-2. `HOMELAB_AND_CLUSTER_CONTEXT.md`
-3. `docs/RESTART_PLAN.md`
-4. `docs/LESSONS_LEARNED.md`
-5. the most recent relevant status or handoff doc in `docs/`
+2. `docs/RESTART_PLAN.md`
+3. `docs/LESSONS_LEARNED.md`
+4. the most recent relevant status or handoff doc in `docs/`
 
 If the task touches Kubernetes workloads, also read:
 
