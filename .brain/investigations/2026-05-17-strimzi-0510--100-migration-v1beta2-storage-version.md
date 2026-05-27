@@ -68,9 +68,9 @@ This "TO" (not "FROM") error occurred with --server-side=true. Plain `kubectl ap
    strimzipodset).
 
 3. Annotate all existing strimzi CRs to force re-write as v1:
-   `kubectl -n kafka annotate kafka kafka brain.hhlab/migration-ts="$(date +%s)" --overwrite`
-   `kubectl -n kafka annotate kafkanodepool combined brain.hhlab/migration-ts="$(date +%s)" --overwrite`
-   `kubectl -n kafka annotate strimzipodset kafka-combined brain.hhlab/migration-ts="$(date +%s)" --overwrite`
+   `kubectl -n kafka annotate kafka kafka brain.example/migration-ts="$(date +%s)" --overwrite`
+   `kubectl -n kafka annotate kafkanodepool combined brain.example/migration-ts="$(date +%s)" --overwrite`
+   `kubectl -n kafka annotate strimzipodset kafka-combined brain.example/migration-ts="$(date +%s)" --overwrite`
    (no KafkaUser/KafkaTopic/KafkaConnect in this setup)
 
 4. Patch ALL strimzi CRD status.storedVersions to ["v1"]:

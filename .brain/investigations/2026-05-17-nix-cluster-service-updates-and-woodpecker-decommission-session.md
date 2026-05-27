@@ -39,7 +39,7 @@ kubernetes, homelab
 - Built spark-s3:3.5.8 and spark-jupyter:3.5.8 via docker buildx (linux/arm64)
 - Imported both images to all 5 cluster nodes via SSH + k3s ctr images import
 - Note: build-and-deploy.sh uses placeholder hostnames (cluster-node-NN.internal.example)
-  → must import manually using real hostnames (cluster-pi-NN.hhlab.home.arpa)
+  → must import manually using real hostnames (cluster-pi-NN.<homelab-domain>)
 
 ## What worked
 
@@ -64,7 +64,7 @@ kubernetes, homelab
 ## Reusable insights
 
 - When kubectl returns "certificate signed by unknown authority": k3s CA may have been regenerated.
-  Fix: `ssh cluster-pi-01 "sudo cat /etc/rancher/k3s/k3s.yaml" | sed 's|127.0.0.1:6443|cluster-api.hhlab.home.arpa:6443|' > ~/.kube/config`
+  Fix: `ssh cluster-pi-01 "sudo cat /etc/rancher/k3s/k3s.yaml" | sed 's|127.0.0.1:6443|cluster-api.<homelab-domain>:6443|' > ~/.kube/config`
 - build-and-deploy.sh IMAGE_TAG must be updated alongside Dockerfile/deployment.yaml version bumps
 - spark-jupyter image is a local-only image (not in a registry) — must be built and imported to every node before the deployment can start
 
