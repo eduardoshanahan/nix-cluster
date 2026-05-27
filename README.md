@@ -1,59 +1,21 @@
 # nix-cluster
 
-Declarative NixOS-based Kubernetes cluster work for the homelab Raspberry Pi
-fleet.
+Declarative NixOS-based Kubernetes cluster for the homelab Raspberry Pi fleet.
 
 ## Current Status
 
-**Cluster is running (as of 2026-04-22).**
+**Cluster is running (as of 2026-05-27).**
 
-- 5 Raspberry Pi 4 nodes (8 GB RAM each), NixOS, k3s v1.35.2+k3s1
+- 5 Raspberry Pi 4 nodes (8 GB RAM each), NixOS, k3s from nixos-unstable
 - 3 control-plane/etcd nodes (cluster-pi-01/02/03), 2 workers (cluster-pi-04/05)
-- Cilium 1.16.19 CNI — native routing, full kube-proxy replacement, NetworkPolicy enforced
-- MetalLB — `192.168.1.36` assigned to Traefik ingress
+- Cilium 1.19.4 CNI — native routing, full kube-proxy replacement, NetworkPolicy enforced
+- MetalLB — `192.0.2.36` assigned to Traefik ingress
 - All platform pods healthy: Cilium, CoreDNS, metrics-server, MetalLB, Traefik, kube-state-metrics, apiserver-metrics-proxy, kubelet-metrics-proxy
-- Observability Phase 1 complete — cluster nodes (node-exporter) in Prometheus/Grafana/Uptime Kuma
-- Observability Phase 2 complete — kube-state-metrics and apiserver-metrics scraped by rpi-box-02; Kubernetes overview dashboard and alert rules active
-- Observability Phase 3 complete — cAdvisor container metrics (CPU/memory per pod/container) scraped via kubelet-metrics-proxy
-
-See `docs/INVESTIGATION_CILIUM_ARM64_K3S.md` for Cilium configuration decisions and known issues.
-
-## New Direction
-
-The cluster should be built around:
-
-- one known-good Raspberry Pi 4 base image
-- node-specific configuration applied after first boot
-- minimal per-node differences
-- clear separation between Pi host provisioning and services running on the
-  cluster
-- validation of generated `k3s` units before flashing
-- post-boot deploys for most changes instead of repeated reflashing
-
-The goal is to make the cluster easier to understand, safer to iterate on, and
-more aligned with good NixOS and homelab practices.
-
-## Current Rollout Direction
-
-The active rollout plan is:
-
-- keep the shared bootstrap-image workflow
-- use post-boot deploys for node conversion
-- use `rpi-box-01` as the shared ARM builder
-- make cluster nodes trust the builder signing key through
-  `homelab.nix.trustedBuilderPublicKeys`
-- preserve a first-boot recovery path for stale `k3s` state
-
-The deploy helper in this repo now supports both:
-
-- cross-host deploys with `--build-host`
-- explicit target self-builds with `--self-build`
-
-See `docs/NEXT_SESSION_ROLLOUT_NOTES_2026-03-17.md` for the operator runbook.
+- Observability complete — node-exporter, kube-state-metrics, cAdvisor (kubelet-metrics-proxy), apiserver metrics all scraped by rpi-box-02; dashboards and alert rules active
 
 ## Private Config Workflow
 
-Private cluster values are now expected from a sibling flake:
+Private cluster values are expected from a sibling flake:
 
 - `../nix-cluster-private`
 
@@ -81,20 +43,26 @@ The Kubernetes render helpers also consume the sibling private flake for
 environment-specific values such as ingress hostnames, ingress TLS secret
 names, and MetalLB address pools.
 
-Important: validate and deploy node configs with path-based flake refs so the
-local flake path and private override are included in evaluation:
+Validate and deploy node configs with path-based flake refs so the local
+flake path and private override are included in evaluation:
 
 - `path:$PWD#nixosConfigurations.<node>`
 
-Do not rely on plain `.#nixosConfigurations.<node>` when checking private
-config presence.
+## Deploying
+
+The deploy helper supports cross-host builds and self-builds:
+
+- Cross-host: `NIX_CLUSTER_BUILD_HOST=rpi-box-01 ./deploy.sh cluster-pi-01`
+- Self-build fallback: `./deploy.sh --self-build cluster-pi-01`
+
+See `docs/NODE_DEPLOYMENT_RUNBOOK.md` for the full operator runbook.
 
 ## Start Here
 
-- `docs/PRIVATE_COMPANION_REPO_CONVENTION.md`
-- `docs/RESTART_PLAN.md`
-- `docs/LESSONS_LEARNED.md`
-- `docs/NODE_INVENTORY_TEMPLATE.md`
+- `README.md` (this file)
+- `docs/CLUSTER_ACCESS.md` — node inventory, kubectl setup, exposed services
+- `docs/NODE_DEPLOYMENT_RUNBOOK.md` — deploy and recovery procedures
+- `docs/OBSERVABILITY.md` — Prometheus scrape jobs, dashboards, alert rules
 
 ## Repository Layout
 
@@ -103,12 +71,8 @@ config presence.
 - `nixos/modules/`: shared NixOS modules
 - `nixos/profiles/`: reusable profiles
 - `nixos/hosts/`: public node definitions
-- `nixos/hosts/private/`: legacy local override examples kept as migration
-  reference
-- `kubernetes/`: in-cluster definitions, split into shared platform services,
-  operator tooling, and future applications, using Kustomize as the top-level
-  layout and Helm selectively for upstream apps
-- `docs/`: operator documentation and planning
+- `kubernetes/`: in-cluster definitions — platform services, operator tooling, and applications; Kustomize top-level layout with Helm selectively for upstream charts
+- `docs/`: operator documentation
 
 ## Working Rule
 
