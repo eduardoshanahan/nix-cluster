@@ -13,6 +13,14 @@ Declarative NixOS-based Kubernetes cluster for the homelab Raspberry Pi fleet.
 - All platform pods healthy: Cilium, CoreDNS, metrics-server, MetalLB, Traefik, kube-state-metrics, apiserver-metrics-proxy, kubelet-metrics-proxy
 - Observability complete — node-exporter, kube-state-metrics, cAdvisor (kubelet-metrics-proxy), apiserver metrics all scraped by rpi-box-02; dashboards and alert rules active
 
+## Prerequisites
+
+- [Nix](https://nixos.org/download/) with flakes enabled (`experimental-features = nix-command flakes` in `~/.config/nix/nix.conf`)
+- [direnv](https://direnv.net/) — run `direnv allow` once after cloning to get the dev shell on `cd`
+- A sibling `nix-cluster-private` directory — see `private-config-template/README.md` to create one
+
+The dev shell (`nix develop` or via direnv) provides `kubectl`, `kustomize`, `helm`, `k9s`, and `stern`.
+
 ## Private Config Workflow
 
 Private cluster values are expected from a sibling flake:

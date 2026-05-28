@@ -1,69 +1,42 @@
 # Observability Workloads
 
-This directory holds cluster-side observability components.
+Cluster-side telemetry components. All scrape endpoints are exposed through
+Traefik ingress via TLS; the external Prometheus host (`rpi-box-02`) scrapes
+them over HTTPS.
 
-Current components:
+See `docs/OBSERVABILITY.md` for the full scrape inventory, Grafana dashboards,
+and alert rules.
 
-- `kube-state-metrics` for Kubernetes object state telemetry
-- `apiserver-metrics-proxy` as an internal prototype for authenticated API
-  server metrics collection
+## Components
 
-Current cluster reality outside this repo-managed slice:
+| Component | Namespace | What it does |
+|-----------|-----------|--------------|
+| `kube-state-metrics` | `observability` | Kubernetes object state (nodes, pods, deployments) |
+| `apiserver-metrics-proxy` | `observability` | Proxies `https://kubernetes.default.svc/metrics` with in-cluster auth |
+| `kubelet-metrics-proxy` | `observability` | Fetches `/metrics/cadvisor` from all 5 nodes via K8s API proxy |
+| `control-plane-metrics-proxy` | `observability` | Aggregates scheduler (`:10259`) and controller-manager (`:10257`) from control-plane nodes |
 
-- `metrics-server` also runs in `kube-system`, but it is currently a `k3s`
-  managed component rather than a repo-managed workload here
+`metrics-server` also runs in `kube-system`, but it is a k3s-managed component
+rather than a repo-managed workload.
 
-The intended split is:
+## Exposure Model
 
-- this repo deploys the in-cluster telemetry components
-- `nix-pi` extends Prometheus scrape configuration on `rpi-box-02`
-- `nix-services` adds Grafana dashboards for the new telemetry
-
-## Current Exposure Model
-
-`kube-state-metrics` now stays internal as a `ClusterIP` service and is exposed
-through Traefik ingress.
-
-Current intended scrape path:
+All components are `ClusterIP` services exposed through Traefik ingress:
 
 - `https://kube-state-metrics.<homelab-domain>/metrics`
+- `https://kube-state-metrics.<homelab-domain>/apiserver-metrics`
+- `https://kube-state-metrics.<homelab-domain>/cadvisor-metrics`
+- `https://kube-state-metrics.<homelab-domain>/scheduler-metrics`
+- `https://kube-state-metrics.<homelab-domain>/controller-manager-metrics`
 
-This keeps cluster telemetry on the ingress path already used by other
-cluster-side services instead of relying on a raw NodePort.
-
-## Current Control-Plane Constraint
-
-The next observability gap is deeper `k3s` control-plane telemetry.
-
-The live cluster does expose relevant endpoints, but not in a directly
-scrapeable way for the external Prometheus host:
-
-- scheduler metrics are on `127.0.0.1:10259`
-- controller-manager metrics are on `127.0.0.1:10257`
-- kubelet metrics are on `:10250`
-- API server metrics are on `:6443`
-
-Current observed access behavior from `cluster-pi-01`:
-
-- scheduler and controller-manager `/metrics` return `403`
-- kubelet `/metrics` returns `401`
-- API server `/metrics` returns `401`
-
-That means the next step is not "open another host port and scrape it".
-
-The next step is to choose a safe authenticated collection model before adding
-control-plane metrics to the homelab monitoring stack.
-
-The current repo-managed prototype for that direction is:
-
-- `apiserver-metrics-proxy`
-  - uses a service account plus RBAC for `/metrics`
-  - fetches API server metrics from `https://kubernetes.default.svc/metrics`
-  - re-exposes them as an internal `ClusterIP` service
-  - intentionally does not add ingress or external scrape wiring yet
-
-Build the manifests with:
+## Build the Manifests
 
 ```bash
 nix run .#render-platform
+```
+
+Or render the observability stack in isolation:
+
+```bash
+nix run .#render-observability
 ```

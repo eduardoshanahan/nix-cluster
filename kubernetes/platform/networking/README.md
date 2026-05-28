@@ -4,8 +4,9 @@ This directory holds shared cluster networking components.
 
 Current components:
 
-- `traefik` as the ingress controller
-- `metallb` for bare-metal `LoadBalancer` IP allocation
+- `cilium` — CNI, native routing, full kube-proxy replacement, NetworkPolicy
+- `traefik` — ingress controller
+- `metallb` — bare-metal `LoadBalancer` IP allocation
 
 The current homelab LAN address pool is:
 

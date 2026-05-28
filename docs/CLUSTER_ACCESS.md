@@ -61,7 +61,7 @@ nix develop --command stern -n observability .
 
 ## Troubleshooting
 
-**Connection refused / certificate errors** — re-copy the kubeconfig; the k3s CA may have been regenerated. See also the CA regeneration note in `docs/KUBECTL_ACCESS.md` history.
+**Connection refused / certificate errors** — re-copy the kubeconfig; the k3s CA may have been regenerated. Re-run the copy step above and replace `~/.kube/config`.
 
 **kubectl not found** — run `nix develop` first; kubectl is only in the devShell.
 
