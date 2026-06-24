@@ -1,5 +1,7 @@
 # Agent Instructions — nix-cluster (public)
 
+> **RETIRED 2026-06-24**
+
 This file extends the global instructions at `~/Programming/hhlab/brain/.brain/AGENT.md`.
 
 ---
