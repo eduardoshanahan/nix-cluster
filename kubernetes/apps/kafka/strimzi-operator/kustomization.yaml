@@ -10,6 +10,6 @@ helmCharts:
   - name: strimzi-kafka-operator
     releaseName: strimzi-kafka-operator
     repo: https://strimzi.io/charts/
-    version: 1.1.0
+    version: 1.0.0
     namespace: kafka
     valuesFile: values.yaml
